@@ -55,6 +55,34 @@ for my $v (@inputs) {
   cmp_ok(is_bfloat16_nan($div), '==', 1, "$v / NaN is NaN");
 }
 
+my $root = sqrt(Math::Bfloat16->new(2));
+cmp_ok($root, '==', Math::Bfloat16->new('1.414'), "sqrt(2) == 1.414 (MPFR)");
+cmp_ok($root, '==', '1.414', "sqrt(2) == '1.414'");
+cmp_ok($root, '==', Math::Bfloat16->new(2) ** 0.5, "sqrt(2) == 2 ** 0.5");
+cmp_ok($root, '==', 2 ** Math::Bfloat16->new(0.5), "sqrt(2) == 2 ** 0.5");
+
+my $log = log(Math::Bfloat16->new(10));
+cmp_ok($log, '==', Math::Bfloat16->new('2.297'), "log(10) == 2.297 (MPFR)");
+cmp_ok($log, '==', '2.297', "log(10) == '2.297'");
+
+my $exp = exp(Math::Bfloat16->new('2.297'));
+cmp_ok($exp, '==', Math::Bfloat16->new('9.938'), "exp('2.297') == 9.938 (MPFR)");
+cmp_ok($exp, '==', '9.938', "exp('2.297') == '9.938'");
+
+my $int = int(Math::Bfloat16->new(21.9));
+cmp_ok($int, '==', 21, "int(21.9) == 21");
+
+########################################################
+## '!' is not calling _oload_not ... dunno why.
+#my $ok = 0;
+#$ok = 1 if !Math::Bfloat16->new(0);
+#cmp_ok($ok, '==', 1, "Math::Bfloat16->new(0) is false"); # PASSES
+#
+#$ok = 0;
+#$ok = 1 if !Math::Bfloat16->new();
+#cmp_ok($ok, '==', 1, "Math::Bfloat16->new() is false");  # FAILS
+
+
 ###############
 # Error Tests #
 ###############

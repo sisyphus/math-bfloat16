@@ -308,6 +308,33 @@ SV * _oload_div(pTHX_ __bf16 * a, __bf16 * b, SV * third) {
   return obj_ref;
 }
 
+SV * _oload_pow(pTHX_ __bf16 * a, __bf16 * b, SV * third) {
+
+  __bf16 * f_obj;
+  SV * obj_ref, * obj;
+  mpfr_t a0, b0;
+
+  mpfr_init2(a0, 8);
+  mpfr_init2(b0, 8);
+
+  mpfr_set_bfloat16(a0, *a, MPFR_RNDN);
+  mpfr_set_bfloat16(b0, *b, MPFR_RNDN);
+
+  Newx(f_obj, 1, __bf16);
+  if(f_obj == NULL) croak("Failed to allocate memory in _oload_pow function");
+  obj_ref = newSV(0);
+  obj = newSVrv(obj_ref, "Math::Bfloat16");
+
+  if(SvTRUE_nomg_NN(third)) mpfr_pow(a0, b0, a0, MPFR_RNDN);  /* b ** a */
+  else  mpfr_pow(a0, a0, b0, MPFR_RNDN);                      /* a ** b */
+
+  *f_obj = mpfr_get_bfloat16(a0, MPFR_RNDN);
+
+  sv_setiv(obj, INT2PTR(IV,f_obj));
+  SvREADONLY_on(obj);
+  return obj_ref;
+}
+
 int _oload_equiv(__bf16 * a, __bf16 * b, SV * third) {
   if(*a == *b) return 1;
   return 0;
@@ -363,6 +390,99 @@ SV * _oload_spaceship(pTHX_ __bf16 * a, __bf16 * b, SV * third) {
   }
   if(*a > *b) return newSViv(1);
   return newSViv(-1);
+}
+
+int _oload_not(__bf16 * a, SV * second, SV * third) {
+  if(is_bfloat16_nan(a) || *a == 0) return 1;
+  return 0;
+}
+
+SV * _oload_int(pTHX_ __bf16 * a, SV * second, SV * third) {
+  __bf16 * f_obj;
+  SV * obj_ref, * obj;
+  mpfr_t temp;
+
+  mpfr_init2(temp, 8);
+
+  Newx(f_obj, 1, __bf16);
+  if(f_obj == NULL) croak("Failed to allocate memory in _oload_int function");
+  obj_ref = newSV(0);
+  obj = newSVrv(obj_ref, "Math::Bfloat16");
+
+  mpfr_set_bfloat16(temp, *a, MPFR_RNDN);
+  mpfr_trunc(temp, temp);
+  *f_obj = mpfr_get_bfloat16(temp, MPFR_RNDN);
+  mpfr_clear(temp);
+
+  sv_setiv(obj, INT2PTR(IV,f_obj));
+  SvREADONLY_on(obj);
+  return obj_ref;
+}
+
+SV * _oload_log(pTHX_ __bf16 * a, SV * second, SV * third) {
+  __bf16 * f_obj;
+  SV * obj_ref, * obj;
+  mpfr_t temp;
+
+  mpfr_init2(temp, 8);
+
+  Newx(f_obj, 1, __bf16);
+  if(f_obj == NULL) croak("Failed to allocate memory in _oload_log function");
+  obj_ref = newSV(0);
+  obj = newSVrv(obj_ref, "Math::Bfloat16");
+
+  mpfr_set_bfloat16(temp, *a, MPFR_RNDN);
+  mpfr_log(temp, temp, MPFR_RNDN);
+  *f_obj = mpfr_get_bfloat16(temp, MPFR_RNDN);
+  mpfr_clear(temp);
+
+  sv_setiv(obj, INT2PTR(IV,f_obj));
+  SvREADONLY_on(obj);
+  return obj_ref;
+}
+
+SV * _oload_exp(pTHX_ __bf16 * a, SV * second, SV * third) {
+  __bf16 * f_obj;
+  SV * obj_ref, * obj;
+  mpfr_t temp;
+
+  mpfr_init2(temp, 8);
+
+  Newx(f_obj, 1, __bf16);
+  if(f_obj == NULL) croak("Failed to allocate memory in _oload_exp function");
+  obj_ref = newSV(0);
+  obj = newSVrv(obj_ref, "Math::Bfloat16");
+
+  mpfr_set_bfloat16(temp, *a, MPFR_RNDN);
+  mpfr_exp(temp, temp, MPFR_RNDN);
+  *f_obj = mpfr_get_bfloat16(temp, MPFR_RNDN);
+  mpfr_clear(temp);
+
+  sv_setiv(obj, INT2PTR(IV,f_obj));
+  SvREADONLY_on(obj);
+  return obj_ref;
+}
+
+SV * _oload_sqrt(pTHX_ __bf16 * a, SV * second, SV * third) {
+  __bf16 * f_obj;
+  SV * obj_ref, * obj;
+  mpfr_t temp;
+
+  mpfr_init2(temp, 8);
+
+  Newx(f_obj, 1, __bf16);
+  if(f_obj == NULL) croak("Failed to allocate memory in _oload_sqrt function");
+  obj_ref = newSV(0);
+  obj = newSVrv(obj_ref, "Math::Bfloat16");
+
+  mpfr_set_bfloat16(temp, *a, MPFR_RNDN);
+  mpfr_sqrt(temp, temp, MPFR_RNDN);
+  *f_obj = mpfr_get_bfloat16(temp, MPFR_RNDN);
+  mpfr_clear(temp);
+
+  sv_setiv(obj, INT2PTR(IV,f_obj));
+  SvREADONLY_on(obj);
+  return obj_ref;
 }
 
 void DESTROY(SV * obj) {
@@ -497,6 +617,15 @@ CODE:
   RETVAL = _oload_div (aTHX_ a, b, third);
 OUTPUT:  RETVAL
 
+SV *
+_oload_pow (a, b, third)
+	__bf16 *	a
+	__bf16 *	b
+	SV *	third
+CODE:
+  RETVAL = _oload_pow (aTHX_ a, b, third);
+OUTPUT:  RETVAL
+
 int
 _oload_equiv (a, b, third)
 	__bf16 *	a
@@ -552,6 +681,48 @@ _oload_spaceship (a, b, third)
 	SV *	third
 CODE:
   RETVAL = _oload_spaceship (aTHX_ a, b, third);
+OUTPUT:  RETVAL
+
+int
+_oload_not (a, second, third)
+	__bf16 *	a
+	SV *	second
+	SV *	third
+
+SV *
+_oload_int (a, second, third)
+	__bf16 *	a
+	SV *	second
+	SV *	third
+CODE:
+  RETVAL = _oload_int (aTHX_ a, second, third);
+OUTPUT:  RETVAL
+
+SV *
+_oload_log (a, second, third)
+	__bf16 *	a
+	SV *	second
+	SV *	third
+CODE:
+  RETVAL = _oload_log (aTHX_ a, second, third);
+OUTPUT:  RETVAL
+
+SV *
+_oload_exp (a, second, third)
+	__bf16 *	a
+	SV *	second
+	SV *	third
+CODE:
+  RETVAL = _oload_exp (aTHX_ a, second, third);
+OUTPUT:  RETVAL
+
+SV *
+_oload_sqrt (a, second, third)
+	__bf16 *	a
+	SV *	second
+	SV *	third
+CODE:
+  RETVAL = _oload_sqrt (aTHX_ a, second, third);
 OUTPUT:  RETVAL
 
 void

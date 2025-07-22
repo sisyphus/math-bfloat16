@@ -8,6 +8,7 @@ use overload
 '-' => \&oload_sub,
 '*' => \&oload_mul,
 '/' => \&oload_add,
+'**'=> \&oload_pow,
 '=='  => \&oload_equiv,
 '!='  => \&oload_not_equiv,
 '>'   => \&oload_gt,
@@ -15,7 +16,11 @@ use overload
 '<'   => \&oload_lt,
 '<='  => \&oload_lte,
 '<=>' => \&oload_spaceship,
-
+'sqrt' => \&_oload_sqrt,
+'exp'  => \&_oload_exp,
+'log'  => \&_oload_log,
+'int'  => \&_oload_int,
+'!'    => \&_oload_not,
 '""' => \&oload_interp,
 ;
 
@@ -104,6 +109,16 @@ sub oload_div {
      return _oload_div($_[0], $coderef->($_[1]), $_[2]);
    }
    die "Unrecognized 2nd argument passed to oload_div() function";
+}
+
+sub oload_pow {
+   my $itsa = _itsa($_[1]);
+   return _oload_pow(@_) if $itsa == 20;
+   if($itsa < 5) {
+     my $coderef = $Math::Bfloat16::handler{$itsa};
+     return _oload_pow($_[0], $coderef->($_[1]), $_[2]);
+   }
+   die "Unrecognized 2nd argument passed to oload_pow() function";
 }
 
 sub oload_equiv {
