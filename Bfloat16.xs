@@ -38,7 +38,7 @@ SV * _itsa(pTHX_ SV * a) {
   return newSVuv(0);
 }
 
-int is_nan(__bf16 * obj) {
+int is_bfloat16_nan(__bf16 * obj) {
     int ret;
     mpfr_t temp;
     mpfr_init2(temp, 8);
@@ -49,7 +49,7 @@ int is_nan(__bf16 * obj) {
     return ret;
 }
 
-int is_inf(__bf16 * obj) {
+int is_bfloat16_inf(__bf16 * obj) {
     int ret;
     mpfr_t temp;
     mpfr_init2(temp, 8);
@@ -64,7 +64,7 @@ int is_inf(__bf16 * obj) {
     return ret;
 }
 
-int is_zero(__bf16 * obj) {
+int is_bfloat16_zero(__bf16 * obj) {
     int ret;
     mpfr_t temp;
     mpfr_init2(temp, 8);
@@ -356,7 +356,7 @@ int _oload_lte(pTHX_ __bf16 * a, __bf16 * b, SV * third) {
 
 SV * _oload_spaceship(pTHX_ __bf16 * a, __bf16 * b, SV * third) {
   if(*a == *b) return newSViv(0);
-  if(is_nan(a) || is_nan(b)) return &PL_sv_undef;
+  if(is_bfloat16_nan(a) || is_bfloat16_nan(b)) return &PL_sv_undef;
   if(SvTRUE_nomg_NN(third)) {
     if(*b > *a) return newSViv(1);
     return newSViv(-1);
@@ -387,15 +387,15 @@ CODE:
 OUTPUT:  RETVAL
 
 int
-is_nan (obj)
+is_bfloat16_nan (obj)
 	__bf16 *	obj
 
 int
-is_inf (obj)
+is_bfloat16_inf (obj)
 	__bf16 *	obj
 
 int
-is_zero (obj)
+is_bfloat16_zero (obj)
 	__bf16 *	obj
 
 SV *

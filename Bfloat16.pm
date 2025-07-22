@@ -33,7 +33,9 @@ if(Math::MPFR::MPFR_VERSION < 262912 || !Math::MPFR::Rmpfr_buildopt_bfloat16_p()
   exit 0;
 }
 
-my @tagged = qw(toNV toMPFR);
+my @tagged = qw( toNV toMPFR
+                 is_bfloat16_nan is_bfloat16_inf is_bfloat16_zero
+               );
 
 @Math::Bfloat16::EXPORT = ();
 @Math::Bfloat16::EXPORT_OK = @tagged;
@@ -49,8 +51,6 @@ my @tagged = qw(toNV toMPFR);
                7  => sub {return _fromGMPq(shift)},
 
                20 => sub {return _fromBfloat16(shift)},
-               21 => sub {return _fromFloat16(shift)},
-               22 => sub {return _fromFloat32(shift)},
                );
 
 sub new {
@@ -68,7 +68,8 @@ sub new {
 
 sub oload_add {
    my $itsa = _itsa($_[1]);
-   if($itsa) {
+   return _oload_add(@_) if $itsa == 20;
+   if($itsa < 5) {
      my $coderef = $Math::Bfloat16::handler{$itsa};
      return _oload_add($_[0], $coderef->($_[1]), 0);
    }
@@ -77,7 +78,8 @@ sub oload_add {
 
 sub oload_mul {
    my $itsa = _itsa($_[1]);
-   if($itsa) {
+   return _oload_mul(@_) if $itsa == 20;
+   if($itsa < 5) {
      my $coderef = $Math::Bfloat16::handler{$itsa};
      return _oload_mul($_[0], $coderef->($_[1]), 0);
    }
@@ -86,7 +88,8 @@ sub oload_mul {
 
 sub oload_sub {
    my $itsa = _itsa($_[1]);
-   if($itsa) {
+   return _oload_sub(@_) if $itsa == 20;
+   if($itsa < 5) {
      my $coderef = $Math::Bfloat16::handler{$itsa};
      return _oload_sub($_[0], $coderef->($_[1]), $_[2]);
    }
@@ -95,7 +98,8 @@ sub oload_sub {
 
 sub oload_div {
    my $itsa = _itsa($_[1]);
-   if($itsa) {
+   return _oload_div(@_) if $itsa == 20;
+   if($itsa < 5) {
      my $coderef = $Math::Bfloat16::handler{$itsa};
      return _oload_div($_[0], $coderef->($_[1]), $_[2]);
    }
@@ -104,7 +108,7 @@ sub oload_div {
 
 sub oload_equiv {
    my $itsa = _itsa($_[1]);
-   if($itsa) {
+   if($itsa == 20 || $itsa < 5) {
      my $coderef = $Math::Bfloat16::handler{$itsa};
      return _oload_equiv($_[0], $coderef->($_[1]), 0);
    }
@@ -113,7 +117,7 @@ sub oload_equiv {
 
 sub oload_not_equiv {
    my $itsa = _itsa($_[1]);
-   if($itsa) {
+   if($itsa == 20 || $itsa < 5) {
      my $coderef = $Math::Bfloat16::handler{$itsa};
      return _oload_not_equiv($_[0], $coderef->($_[1]), 0);
    }
@@ -122,7 +126,7 @@ sub oload_not_equiv {
 
 sub oload_gt {
    my $itsa = _itsa($_[1]);
-   if($itsa) {
+   if($itsa == 20 || $itsa < 5) {
      my $coderef = $Math::Bfloat16::handler{$itsa};
      return _oload_gt($_[0], $coderef->($_[1]), $_[2]);
    }
@@ -131,7 +135,7 @@ sub oload_gt {
 
 sub oload_gte {
    my $itsa = _itsa($_[1]);
-   if($itsa) {
+   if($itsa == 20 || $itsa < 5) {
      my $coderef = $Math::Bfloat16::handler{$itsa};
      return _oload_gte($_[0], $coderef->($_[1]), $_[2]);
    }
@@ -140,7 +144,7 @@ sub oload_gte {
 
 sub oload_lt {
    my $itsa = _itsa($_[1]);
-   if($itsa) {
+   if($itsa == 20 || $itsa < 5) {
      my $coderef = $Math::Bfloat16::handler{$itsa};
      return _oload_lt($_[0], $coderef->($_[1]), $_[2]);
    }
@@ -149,7 +153,7 @@ sub oload_lt {
 
 sub oload_lte {
    my $itsa = _itsa($_[1]);
-   if($itsa) {
+   if($itsa == 20 || $itsa < 5) {
      my $coderef = $Math::Bfloat16::handler{$itsa};
      return _oload_lte($_[0], $coderef->($_[1]), $_[2]);
    }
@@ -158,7 +162,7 @@ sub oload_lte {
 
 sub oload_spaceship {
    my $itsa = _itsa($_[1]);
-   if($itsa) {
+   if($itsa == 20 || $itsa < 5) {
      my $coderef = $Math::Bfloat16::handler{$itsa};
      return _oload_spaceship($_[0], $coderef->($_[1]), $_[2]);
    }
