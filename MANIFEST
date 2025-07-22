@@ -7,4 +7,5 @@ have_bfloat16.in
 t/new.t
 t/overload_arith.t
 t/overload_cmp.t
+README
 typemap

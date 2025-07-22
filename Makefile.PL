@@ -24,6 +24,41 @@ if(!$have_bfloat16) {
   exit 0;
 }
 
+unlink "./have_bfloat16.exe"; # No longer needed - leaving it in place can cause confusion.
+
+eval { require Math::MPFR;};
+
+if($@) {
+  warn "\n Aborting build of Math::Bfloat16 because Math::MPFR failed to load.\n",
+       " Please install latest release of Math::MPFR from CPAN, and then try again.\n",
+       " See also the README file.\n";
+  exit 0;
+}
+
+if($Math::MPFR::VERSION < '4.43') {
+  warn "\n Aborting build of Math::Bfloat16 because the installed version ($Math::MPFR::VERSION) is too old.\n",
+       " We need at least version 4.43. See the README file.\n",
+       " Please install latest release of Math::MPFR from CPAN, and then try again.\n";
+  exit 0;
+}
+
+if(Math::MPFR::MPFR_VERSION() < 262912) {
+  warn "\n Aborting build of Math::Bfloat16 because Math::MPFR has been built\n",
+       " against an mpfr C library that is too old.\n",
+       " The library needs to be at version 4.3.0 or later. This is only ", Math::MPFR::MPFR_VERSION_STRING(), "\n",
+       " See the README file.\n";
+  exit 0;
+}
+
+my $build_opt = Math::MPFR::Rmpfr_buildopt_bfloat16_p();
+
+unless($build_opt) {
+  warn "\n Aborting because the mpfr C library against which Math::MPFR has been\n",
+       " built does not support the __bf16 (Bfloat) type.\n",
+       " See the README file.\n";
+  exit 0;
+}
+
 my %options = (
   NAME         => 'Math::Bfloat16',
   AUTHOR       => 'Sisyphus (sisyphus at (@) cpan dot (.) org)',
