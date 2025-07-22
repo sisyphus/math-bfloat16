@@ -2,6 +2,10 @@
 # Module Math::Bfloat16 #
 #########################
 
+Currently, this module builds only on 64-bit builds of perl. This might
+be fixedin the future but, for now, the build aborts (with the
+appropriate explanation) if one tries to build it on a 32-bit perl.
+
 To build this module you need to have a perl that is at version 5.32 or
 later, and that has been built by a compiler that supports the __bf16 type.
 

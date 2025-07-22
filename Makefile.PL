@@ -3,7 +3,18 @@ use warnings;
 use Config;
 use ExtUtils::MakeMaker;
 
-require 5.032;
+eval{ require 5.032;};
+
+if($@) {
+  warn "\n Aborting build of Math::Bfloat16 because:\n$@\n";
+  exit 0;
+}
+
+if($Config{ptrsize} == 4) {
+  warn "\n Aborting build of Math::Bfloat16 because this is a 32-bit build of perl.\n",
+       " (We might address this in the future to support 32-bit builds.)\n";
+  exit 0;
+}
 
 ###########################################
 # Check whether __bf16 type is recognized #
