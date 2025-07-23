@@ -4,11 +4,18 @@ package Math::Bfloat16;
 use Math::MPFR qw(:mpfr);
 
 use overload
-'+' => \&oload_add,
-'-' => \&oload_sub,
-'*' => \&oload_mul,
-'/' => \&oload_add,
-'**'=> \&oload_pow,
+'+'  => \&oload_add,
+'-'  => \&oload_sub,
+'*'  => \&oload_mul,
+'/'  => \&oload_div,
+'**' => \&oload_pow,
+
+'+='  => \&oload_add_eq,
+'-='  => \&oload_sub_eq,
+'*='  => \&oload_mul_eq,
+'/='  => \&oload_div_eq,
+'**=' => \&oload_pow,
+
 '=='  => \&oload_equiv,
 '!='  => \&oload_not_equiv,
 '>'   => \&oload_gt,
@@ -16,12 +23,15 @@ use overload
 '<'   => \&oload_lt,
 '<='  => \&oload_lte,
 '<=>' => \&oload_spaceship,
+
+'abs'  => \&oload_abs,
 'sqrt' => \&_oload_sqrt,
 'exp'  => \&_oload_exp,
 'log'  => \&_oload_log,
 'int'  => \&_oload_int,
 '!'    => \&_oload_not,
-'""' => \&oload_interp,
+'bool' => \&_oload_bool,
+'""'   => \&oload_interp,
 ;
 
 require Exporter;
@@ -81,6 +91,16 @@ sub oload_add {
    die "Unrecognized 2nd argument passed to oload_add() function";
 }
 
+sub oload_add_eq {
+   my $itsa = _itsa($_[1]);
+   return _oload_add_eq(@_) if $itsa == 20;
+   if($itsa < 5) {
+     my $coderef = $Math::Bfloat16::handler{$itsa};
+     return _oload_add_eq($_[0], $coderef->($_[1]), 0);
+   }
+   die "Unrecognized 2nd argument passed to oload_add_eq() function";
+}
+
 sub oload_mul {
    my $itsa = _itsa($_[1]);
    return _oload_mul(@_) if $itsa == 20;
@@ -89,6 +109,16 @@ sub oload_mul {
      return _oload_mul($_[0], $coderef->($_[1]), 0);
    }
    die "Unrecognized 2nd argument passed to oload_mul() function";
+}
+
+sub oload_mul_eq {
+   my $itsa = _itsa($_[1]);
+   return _oload_mul_eq(@_) if $itsa == 20;
+   if($itsa < 5) {
+     my $coderef = $Math::Bfloat16::handler{$itsa};
+     return _oload_mul_eq($_[0], $coderef->($_[1]), 0);
+   }
+   die "Unrecognized 2nd argument passed to oload_mul_eq() function";
 }
 
 sub oload_sub {
@@ -101,6 +131,16 @@ sub oload_sub {
    die "Unrecognized 2nd argument passed to oload_sub() function";
 }
 
+sub oload_sub_eq {
+   my $itsa = _itsa($_[1]);
+   return _oload_sub_eq(@_) if $itsa == 20;
+   if($itsa < 5) {
+     my $coderef = $Math::Bfloat16::handler{$itsa};
+     return _oload_sub_eq($_[0], $coderef->($_[1]), 0);
+   }
+   die "Unrecognized 2nd argument passed to oload_sub_eq() function";
+}
+
 sub oload_div {
    my $itsa = _itsa($_[1]);
    return _oload_div(@_) if $itsa == 20;
@@ -111,6 +151,16 @@ sub oload_div {
    die "Unrecognized 2nd argument passed to oload_div() function";
 }
 
+sub oload_div_eq {
+   my $itsa = _itsa($_[1]);
+   return _oload_div_eq(@_) if $itsa == 20;
+   if($itsa < 5) {
+     my $coderef = $Math::Bfloat16::handler{$itsa};
+     return _oload_div_eq($_[0], $coderef->($_[1]), 0);
+   }
+   die "Unrecognized 2nd argument passed to oload_div_eq() function";
+}
+
 sub oload_pow {
    my $itsa = _itsa($_[1]);
    return _oload_pow(@_) if $itsa == 20;
@@ -119,6 +169,21 @@ sub oload_pow {
      return _oload_pow($_[0], $coderef->($_[1]), $_[2]);
    }
    die "Unrecognized 2nd argument passed to oload_pow() function";
+}
+
+sub oload_pow_eq {
+   my $itsa = _itsa($_[1]);
+   return _oload_pow_eq(@_) if $itsa == 20;
+   if($itsa < 5) {
+     my $coderef = $Math::Bfloat16::handler{$itsa};
+     return _oload_pow_eq($_[0], $coderef->($_[1]), 0);
+   }
+   die "Unrecognized 2nd argument passed to oload_pow_eq() function";
+}
+
+sub oload_abs {
+  return $_[0] * -1 if $_[0] < 0;
+  return $_[0];
 }
 
 sub oload_equiv {

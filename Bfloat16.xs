@@ -255,6 +255,13 @@ SV * _oload_add(pTHX_ __bf16 * a, __bf16 * b, SV * third) {
   return obj_ref;
 }
 
+SV * _oload_add_eq(SV * a, SV * b, SV * third) {
+
+  SvREFCNT_inc(a);
+  *(INT2PTR(__bf16 *, SvIVX(SvRV(a)))) += *(INT2PTR(__bf16 *, SvIVX(SvRV(b))));
+  return a;
+}
+
 SV * _oload_sub(pTHX_ __bf16 * a, __bf16 * b, SV * third) {
 
   __bf16 * f_obj;
@@ -271,6 +278,13 @@ SV * _oload_sub(pTHX_ __bf16 * a, __bf16 * b, SV * third) {
   sv_setiv(obj, INT2PTR(IV,f_obj));
   SvREADONLY_on(obj);
   return obj_ref;
+}
+
+SV * _oload_sub_eq(SV * a, SV * b, SV * third) {
+
+  SvREFCNT_inc(a);
+  *(INT2PTR(__bf16 *, SvIVX(SvRV(a)))) -= *(INT2PTR(__bf16 *, SvIVX(SvRV(b))));
+  return a;
 }
 
 SV * _oload_mul(pTHX_ __bf16 * a, __bf16 * b, SV * third) {
@@ -290,6 +304,13 @@ SV * _oload_mul(pTHX_ __bf16 * a, __bf16 * b, SV * third) {
   return obj_ref;
 }
 
+SV * _oload_mul_eq(SV * a, SV * b, SV * third) {
+
+  SvREFCNT_inc(a);
+  *(INT2PTR(__bf16 *, SvIVX(SvRV(a)))) *= *(INT2PTR(__bf16 *, SvIVX(SvRV(b))));
+  return a;
+}
+
 SV * _oload_div(pTHX_ __bf16 * a, __bf16 * b, SV * third) {
 
   __bf16 * f_obj;
@@ -306,6 +327,13 @@ SV * _oload_div(pTHX_ __bf16 * a, __bf16 * b, SV * third) {
   sv_setiv(obj, INT2PTR(IV,f_obj));
   SvREADONLY_on(obj);
   return obj_ref;
+}
+
+SV * _oload_div_eq(SV * a, SV * b, SV * third) {
+
+  SvREFCNT_inc(a);
+  *(INT2PTR(__bf16 *, SvIVX(SvRV(a)))) /= *(INT2PTR(__bf16 *, SvIVX(SvRV(b))));
+  return a;
 }
 
 SV * _oload_pow(pTHX_ __bf16 * a, __bf16 * b, SV * third) {
@@ -395,6 +423,11 @@ SV * _oload_spaceship(pTHX_ __bf16 * a, __bf16 * b, SV * third) {
 int _oload_not(__bf16 * a, SV * second, SV * third) {
   if(is_bfloat16_nan(a) || *a == 0) return 1;
   return 0;
+}
+
+int _oload_bool(__bf16 * a, SV * second, SV * third) {
+  if(is_bfloat16_nan(a) || *a == 0) return 0;
+  return 1;
 }
 
 SV * _oload_int(pTHX_ __bf16 * a, SV * second, SV * third) {
@@ -591,6 +624,12 @@ CODE:
 OUTPUT:  RETVAL
 
 SV *
+_oload_add_eq (a, b, third)
+	SV *	a
+	SV *	b
+	SV *	third
+
+SV *
 _oload_sub (a, b, third)
 	__bf16 *	a
 	__bf16 *	b
@@ -598,6 +637,12 @@ _oload_sub (a, b, third)
 CODE:
   RETVAL = _oload_sub (aTHX_ a, b, third);
 OUTPUT:  RETVAL
+
+SV *
+_oload_sub_eq (a, b, third)
+	SV *	a
+	SV *	b
+	SV *	third
 
 SV *
 _oload_mul (a, b, third)
@@ -609,6 +654,12 @@ CODE:
 OUTPUT:  RETVAL
 
 SV *
+_oload_mul_eq (a, b, third)
+	SV *	a
+	SV *	b
+	SV *	third
+
+SV *
 _oload_div (a, b, third)
 	__bf16 *	a
 	__bf16 *	b
@@ -616,6 +667,12 @@ _oload_div (a, b, third)
 CODE:
   RETVAL = _oload_div (aTHX_ a, b, third);
 OUTPUT:  RETVAL
+
+SV *
+_oload_div_eq (a, b, third)
+	SV *	a
+	SV *	b
+	SV *	third
 
 SV *
 _oload_pow (a, b, third)
@@ -685,6 +742,12 @@ OUTPUT:  RETVAL
 
 int
 _oload_not (a, second, third)
+	__bf16 *	a
+	SV *	second
+	SV *	third
+
+int
+_oload_bool (a, second, third)
 	__bf16 *	a
 	SV *	second
 	SV *	third

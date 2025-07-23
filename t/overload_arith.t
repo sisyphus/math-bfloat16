@@ -55,6 +55,127 @@ for my $v (@inputs) {
   cmp_ok(is_bfloat16_nan($div), '==', 1, "$v / NaN is NaN");
 }
 
+my $index = scalar(@inputs);
+my @r = ();
+
+for (my $i = 0; $i < $index; $i++) {
+  for (my $j = 0; $j < $index; $j++) {
+     my $r = Math::Bfloat16->new($inputs[$i]) + $inputs[$j];
+     my $s = $inputs[$i] + Math::Bfloat16->new($inputs[$j]);
+     cmp_ok($r, '==', $s, "\$r == $s");
+     push @r, $r;
+  }
+}
+
+my $count = 0;
+for (my $i = 0; $i < $index; $i++) {
+  for (my $j = 0; $j < $index; $j++) {
+     my $x = $inputs[$i];
+     my $y = $inputs[$j];
+     my $obj_x = Math::Bfloat16->new($x);
+     my $obj_y = Math::Bfloat16->new($y);
+     $obj_x += $y;
+     $obj_y += $x;
+     cmp_ok($obj_x, '==', $obj_y, "\$obj_x == $obj_y");
+     cmp_ok($obj_x, '==', $r[$count], "cross_check ok for $x $y [$count]");
+     $count++;
+  }
+}
+
+################################################
+
+@r = ();
+for (my $i = 0; $i < $index; $i++) {
+  for (my $j = 0; $j < $index; $j++) {
+     my $r = Math::Bfloat16->new($inputs[$i]) * $inputs[$j];
+     my $s = $inputs[$i] * Math::Bfloat16->new($inputs[$j]);
+     cmp_ok($r, '==', $s, "\$r == $s");
+     push @r, $r;
+  }
+}
+
+$count = 0;
+for (my $i = 0; $i < $index; $i++) {
+  for (my $j = 0; $j < $index; $j++) {
+     my $x = $inputs[$i];
+     my $y = $inputs[$j];
+     my $obj_x = Math::Bfloat16->new($x);
+     my $obj_y = Math::Bfloat16->new($y);
+     $obj_x *= $y;
+     $obj_y *= $x;
+     cmp_ok($obj_x, '==', $obj_y, "\$obj_x == $obj_y");
+     cmp_ok($obj_x, '==', $r[$count], "cross_check ok for $x $y [$count]");
+     $count++;
+  }
+}
+
+################################################
+################################################
+
+@r = ();
+for (my $i = 0; $i < $index; $i++) {
+  for (my $j = 0; $j < $index; $j++) {
+     my $r = Math::Bfloat16->new($inputs[$i]) - $inputs[$j];
+     my $s = $inputs[$i] - Math::Bfloat16->new($inputs[$j]);
+     my $u = Math::Bfloat16->new($inputs[$j]) - $inputs[$i];
+     my $v = $inputs[$j] - Math::Bfloat16->new($inputs[$i]);
+     cmp_ok($r, '==', $s, "\$r == $s");
+     cmp_ok($u, '==', $v, "\$u == $v");
+     cmp_ok(-$u, '==', $r, "-\$u == $r");
+     cmp_ok(-$v, '==', $s, "-\$v == $s");
+     push @r, $r;
+  }
+}
+
+$count = 0;
+for (my $i = 0; $i < $index; $i++) {
+  for (my $j = 0; $j < $index; $j++) {
+     my $x = $inputs[$i];
+     my $y = $inputs[$j];
+     my $obj_x = Math::Bfloat16->new($x);
+     my $obj_y = Math::Bfloat16->new($y);
+     $obj_x -= $y;
+     $obj_y -= $x;
+     cmp_ok($obj_x, '==', -$obj_y, "\$obj_x == -$obj_y");
+     cmp_ok($obj_x, '==', $r[$count], "cross_check ok for $x $y [$count]");
+     $count++;
+  }
+}
+
+################################################
+################################################
+
+
+for (my $i = 0; $i < $index; $i++) {
+  for (my $j = 0; $j < $index; $j++) {
+     my $r = Math::Bfloat16->new($inputs[$i]) / $inputs[$j];
+     my $s = $inputs[$i] / Math::Bfloat16->new($inputs[$j]);
+     my $u = Math::Bfloat16->new($inputs[$j]) / $inputs[$i];
+     my $v = $inputs[$j] / Math::Bfloat16->new($inputs[$i]);
+     cmp_ok($r, '==', $s, "\$r == $s");
+     cmp_ok($u, '==', $v, "\$u == $v");
+     cmp_ok($r * $u, '>=', -0.99, "\$r * $u >= -0.99");
+     cmp_ok($v * $s, '<=', 1.01, "$v * \$s <= 1.01");
+  }
+}
+
+$count = 0;
+for (my $i = 0; $i < $index; $i++) {
+  for (my $j = 0; $j < $index; $j++) {
+     my $x = $inputs[$i];
+     my $y = $inputs[$j];
+     my $obj_x = Math::Bfloat16->new($x);
+     my $obj_y = Math::Bfloat16->new($y);
+     $obj_x /= $y;
+     $obj_y /= $x;
+     cmp_ok($obj_x * $obj_y, '>=', -0.99, "\$obj_x * $obj_y >= -0.99");
+     cmp_ok($obj_x * $obj_y, '<=',  1.01, "$obj_x * \$obj_y <= 1.01");
+     $count++;
+  }
+}
+
+################################################
+
 my $root = sqrt(Math::Bfloat16->new(2));
 cmp_ok($root, '==', Math::Bfloat16->new('1.414'), "sqrt(2) == 1.414 (MPFR)");
 cmp_ok($root, '==', '1.414', "sqrt(2) == '1.414'");
@@ -72,15 +193,61 @@ cmp_ok($exp, '==', '9.938', "exp('2.297') == '9.938'");
 my $int = int(Math::Bfloat16->new(21.9));
 cmp_ok($int, '==', 21, "int(21.9) == 21");
 
-########################################################
-## '!' is not calling _oload_not ... dunno why.
-#my $ok = 0;
-#$ok = 1 if !Math::Bfloat16->new(0);
-#cmp_ok($ok, '==', 1, "Math::Bfloat16->new(0) is false"); # PASSES
-#
-#$ok = 0;
-#$ok = 1 if !Math::Bfloat16->new();
-#cmp_ok($ok, '==', 1, "Math::Bfloat16->new() is false");  # FAILS
+################
+# overload abs #
+################
+
+my $neg = Math::Bfloat16->new(-10);
+my $abs = abs($neg);
+cmp_ok(ref($abs), 'eq', 'Math::Bfloat16', "abs: ref ok");
+cmp_ok($abs, '==', -$neg, "\$abs == 10");
+
+my $pos = Math::Bfloat16->new(100);
+$abs = abs($pos);
+cmp_ok(ref($abs), 'eq', 'Math::Bfloat16', "abs: ref ok");
+cmp_ok($abs, '==', $pos, "\$abs == 100");
+
+#################
+# overload bool #
+#################
+
+my $ok = 0;
+$ok = 1 if !Math::Bfloat16->new(0);  # $ok should change to 1.
+cmp_ok($ok, '==', 1, "Math::Bfloat16->new(0) is false");
+
+$ok = 0;
+$ok = 1 if !Math::Bfloat16->new();  # $ok should change to 1.
+cmp_ok($ok, '==', 1, "Math::Bfloat16->new() is false");
+
+$ok = 0;
+$ok = 1 if !Math::Bfloat16->new(1);  # $ok should remain at 0.
+cmp_ok($ok, '==', 0, "Math::Bfloat16->new(1) is true");
+
+##############
+# overload ! #
+##############
+
+$ok = 0;
+$ok = !Math::Bfloat16->new(0);  # $ok should change to 1.
+cmp_ok($ok, '==', 1, "!Math::Bfloat16->new(0) is true");
+
+$ok = 0;
+$ok = !Math::Bfloat16->new();  # $ok should change to 1.
+cmp_ok($ok, '==', 1, "!Math::Bfloat16->new() is true");
+
+$ok = 1;
+$ok = !Math::Bfloat16->new(1);  # $ok should change to 0.
+cmp_ok($ok, '==', 0, "!Math::Bfloat16->new(1) is false");
+
+my $interp0 = Math::Bfloat16->new();
+cmp_ok("$interp0", 'eq', 'NaN', "interpolates to 'NaN'");
+my $stringified = sprintf("%s", $interp0);
+cmp_ok("$stringified", 'eq', 'NaN', "sprintf returns 'NaN'");
+
+my $interp1 = sqrt(Math::Bfloat16->new(2));
+cmp_ok("$interp1", 'eq', '1.414', "interpolates to '1.414'");
+$stringified = sprintf("%s", $interp1);
+cmp_ok("$stringified", 'eq', '1.414', "sprintf returns '1.414'");
 
 
 ###############

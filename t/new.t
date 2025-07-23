@@ -39,6 +39,10 @@ cmp_ok(ref(Math::Bfloat16::new()), 'eq', 'Math::Bfloat16', "Math::Bfloat16->new(
 cmp_ok(is_bfloat16_nan(Math::Bfloat16->new()), '==', 1, "Math::Bfloat16->new() returns NaN");
 cmp_ok(is_bfloat16_nan(Math::Bfloat16::new()), '==', 1, "Math::Bfloat16::new() returns NaN");
 
+my $obj = Math::Bfloat16->new('1.414');
+cmp_ok(Math::Bfloat16->new($obj), '==', $obj, "new(obj) == obj");
+cmp_ok(Math::Bfloat16->new($obj), '==', '1.414', "new(obj) == value of obj");
+
 my $mpfr_obj = Math::MPFR->new();
 Math::MPFR::Rmpfr_set_inf($mpfr_obj, 1);
 #print "$mpfr_obj\n";
