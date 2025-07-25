@@ -14,14 +14,105 @@ Math::Bfloat16 - perl interface to the __bf16 floating point type.
 
 =head1 DESCRIPTION
 
+   This module enables us to perform __bf16 (brain float) arithmetic
+   in perl.
+
 =head1 SYNOPSIS
+
+   Values can be assigned as an IV (1414164) or a PV ("1.414164"),
+   or an NV(1.414164) or a Math::MPFR object
+   (Math::MPFR->new("1.414164")):
+   my $val = '1.41416';
+   my $obj = Math::Bfloat16->new($val);
+   print "$obj\n"; # prints 1.414.
+
+   These objects have only 8 bits of precision.
+   Maximum finite value is 1.701e38.
+   Minimum positive non-zero value is 9.184-41.
+
+=head1 ARITHMETIC
+
+   All arithmetic is done via the overloading of the '+',
+   '-', '*', '/', '**'/, '+=', '-=', '*=', '/=', and '**='. The 'log',
+   'exp', 'sqrt', 'abs' and 'int' functions are also overloaded.And
+   the values held within a Math::Bfloat16 object can be interpolated
+   by double-quoting the object -eg:
+
+   my $obj = sqrt(Math::Bfloat16->new(2); print "$obj"; # prints 1.414
+
+   The functions (should you wish to call them) that these overloaded
+   operations call are, as set out in Bfloat16.pm:
+
+    '+'  => oload_add,
+    '-'  => oload_sub,
+    '*'  => oload_mul,
+    '/'  => oload_div,
+    '**' => oload_pow,
+
+    '+='  => oload_add_eq,
+    '-='  => oload_sub_eq,
+    '*='  => oload_mul_eq,
+    '/='  => oload_div_eq,
+    '**=' => oload_pow,
+
+    'abs'  => oload_abs,
+    'sqrt' => _oload_sqrt,
+    'exp'  => _oload_exp,
+    'log'  => _oload_log,
+    'int'  => _oload_int,
+
+    '""'  => oload_interp,
+
+   The comparison operators are also overloaded - as follows:
+
+    '=='  => oload_equiv,
+    '!='  => oload_not_equiv,
+    '>'   => oload_gt,
+    '>='  => oload_gte,
+    '<'   => oload_lt,
+    '<='  => oload_lte,
+    '<=>' => oload_spaceship,
+
+   And the boolean operations:
+    '!'    => _oload_not,
+    'bool' => _oload_bool,
+
+=head1 OTHER FUNCTIONS
+
+    $IV = is_bfloat16_nan($obj);
+     Return 1 if the object holds a NaN. Else return 0.
+
+    $IV = is_bfloat16_inf($obj);
+     Return 1 if the object holds a +Inf.
+     Return -1 if the object holds a -Inf.
+     Otherwise return 0.
+
+    $IV = is_bfloat16_zero($obj);
+     Return 1 if the object holds a zero that is not -0.
+     Return -1 if the object holds a -0.
+     Otherwise return 0.
+
+   $NV = toNV($obj);
+    Return the value of $obj as an NV.
+
+   $MPFR_OBJECT = toMPFR($obj);
+    Return the value of $obj as a Math::MPFR object. This Math::MPFR
+    object holds exactly the same value as oload_interp() examines.
+    Hence, the instructions "print $obj;" and "print toMPFR($obj)"
+    will produce exactly the same output.
+
+   $string = unpack_hex($obj);
+    Unpack the value held internally as a string of hex characters.
+    For example, unpack denorm min and +Inf:
+      print unpack_hex(Math::Bfloat->new(2) ** -133); # 0001
+      print unpack_hex(Math::Bfloat->new(2) ** 128); # 7F80
 
 
 =head1 LICENSE
 
     This program is free software; you may redistribute it and/or
     modify it under the same terms as Perl itself.
-    Copyright 2006-2025 Sisyphus
+    Copyright 2025 Sisyphus.
 
 =head1 AUTHOR
 
