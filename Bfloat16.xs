@@ -14,6 +14,19 @@
 #define MPFR_WANT_BFLOAT16 1
 #include <mpfr.h>
 
+#define TYPE_PRECISION 8
+#define TYPE_EMIN -132
+#define TYPE_EMAX 128
+#define SET_EMIN_EMAX \
+  mpfr_prec_t emin = mpfr_get_emin(); \
+  mpfr_prec_t emax = mpfr_get_emax(); \
+  mpfr_set_emin(TYPE_EMIN);           \
+  mpfr_set_emax(TYPE_EMAX);
+
+#define RESET_EMIN_EMAX \
+  mpfr_set_emin(emin); \
+  mpfr_set_emax(emax);
+
 SV * _itsa(pTHX_ SV * a) {
   if(SvIOK(a)) {
     return newSVuv(2);               /* IV */
@@ -41,7 +54,7 @@ SV * _itsa(pTHX_ SV * a) {
 int is_bfloat16_nan(__bf16 * obj) {
     int ret;
     mpfr_t temp;
-    mpfr_init2(temp, 8);
+    mpfr_init2(temp, TYPE_PRECISION);
 
     mpfr_set_bfloat16(temp, *obj, MPFR_RNDN);
     ret = mpfr_nan_p(temp);
@@ -52,7 +65,7 @@ int is_bfloat16_nan(__bf16 * obj) {
 int is_bfloat16_inf(__bf16 * obj) {
     int ret;
     mpfr_t temp;
-    mpfr_init2(temp, 8);
+    mpfr_init2(temp, TYPE_PRECISION);
 
     mpfr_set_bfloat16(temp, *obj, MPFR_RNDN);
     ret = mpfr_inf_p(temp);
@@ -67,7 +80,7 @@ int is_bfloat16_inf(__bf16 * obj) {
 int is_bfloat16_zero(__bf16 * obj) {
     int ret;
     mpfr_t temp;
-    mpfr_init2(temp, 8);
+    mpfr_init2(temp, TYPE_PRECISION);
 
     mpfr_set_bfloat16(temp, *obj, MPFR_RNDN);
     ret = mpfr_zero_p(temp);
@@ -79,6 +92,19 @@ int is_bfloat16_zero(__bf16 * obj) {
     return ret;
 }
 
+/*
+Unusable - emin and emax need to be set prior to calling this sub.
+void _denormalize(mpfr_t * mpfr_t_obj, int inex) {
+  mpfr_prec_t emin = mpfr_get_emin();
+  mpfr_prec_t emax = mpfr_get_emax();
+
+  mpfr_set_emin(TYPE_EMIN);
+  mpfr_set_emax(TYPE_EMAX);
+  mpfr_subnormalize(*mpfr_t_obj, inex, MPFR_RNDN);
+  mpfr_set_emin(emin);
+  mpfr_set_emax(emax);
+}
+*/
 
 SV * _fromBfloat16(pTHX_ __bf16 * in) {
 
@@ -137,16 +163,20 @@ SV * _fromPV(pTHX_ SV * in) {
   __bf16 * f_obj;
   SV * obj_ref, * obj;
   mpfr_t temp;
+  int inex;
+  SET_EMIN_EMAX
 
-  mpfr_init2(temp, 8);
+  mpfr_init2(temp, TYPE_PRECISION);
 
   Newx(f_obj, 1, __bf16);
   if(f_obj == NULL) croak("Failed to allocate memory in _fromPV function");
   obj_ref = newSV(0);
   obj = newSVrv(obj_ref, "Math::Bfloat16");
 
-  mpfr_strtofr(temp, SvPV_nolen(in), NULL, 0, MPFR_RNDN);
+  inex = mpfr_strtofr(temp, SvPV_nolen(in), NULL, 0, MPFR_RNDN);
+  mpfr_subnormalize(temp, inex, MPFR_RNDN);
   *f_obj = mpfr_get_bfloat16(temp, MPFR_RNDN);
+  RESET_EMIN_EMAX
   mpfr_clear(temp);
 
   sv_setiv(obj, INT2PTR(IV,f_obj));
@@ -176,16 +206,20 @@ SV * _fromGMPf(pTHX_ mpf_t * in) {
   __bf16 * f_obj;
   SV * obj_ref, * obj;
   mpfr_t temp;
+  int inex;
+  SET_EMIN_EMAX
 
-  mpfr_init2(temp, 8);
+  mpfr_init2(temp, TYPE_PRECISION);
 
   Newx(f_obj, 1, __bf16);
   if(f_obj == NULL) croak("Failed to allocate memory in _fromGMPf function");
   obj_ref = newSV(0);
   obj = newSVrv(obj_ref, "Math::Bfloat16");
 
-  mpfr_set_f(temp, *in, MPFR_RNDN);
+  inex = mpfr_set_f(temp, *in, MPFR_RNDN);
+  mpfr_subnormalize(temp, inex, MPFR_RNDN);
   *f_obj = mpfr_get_bfloat16(temp, MPFR_RNDN);
+  RESET_EMIN_EMAX
   mpfr_clear(temp);
 
   sv_setiv(obj, INT2PTR(IV,f_obj));
@@ -198,16 +232,20 @@ SV * _fromGMPq(pTHX_ mpq_t * in) {
   __bf16 * f_obj;
   SV * obj_ref, * obj;
   mpfr_t temp;
+  int inex;
+  SET_EMIN_EMAX
 
-  mpfr_init2(temp, 8);
+  mpfr_init2(temp, TYPE_PRECISION);
 
   Newx(f_obj, 1, __bf16);
   if(f_obj == NULL) croak("Failed to allocate memory in _fromGMPq function");
   obj_ref = newSV(0);
   obj = newSVrv(obj_ref, "Math::Bfloat16");
 
-  mpfr_set_q(temp, *in, MPFR_RNDN);
+  inex = mpfr_set_q(temp, *in, MPFR_RNDN);
+  mpfr_subnormalize(temp, inex, MPFR_RNDN);
   *f_obj = mpfr_get_bfloat16(temp, MPFR_RNDN);
+  RESET_EMIN_EMAX
   mpfr_clear(temp);
 
   sv_setiv(obj, INT2PTR(IV,f_obj));
@@ -229,7 +267,7 @@ SV * toMPFR(pTHX_ __bf16 * f16_obj) {
   obj_ref = newSV(0);
   obj = newSVrv(obj_ref, "Math::MPFR");
 
-  mpfr_init2(*mpfr_t_obj, 8);
+  mpfr_init2(*mpfr_t_obj, TYPE_PRECISION);
   mpfr_set_bfloat16(*mpfr_t_obj, *f16_obj, MPFR_RNDN);
 
   sv_setiv(obj, INT2PTR(IV,mpfr_t_obj));
@@ -341,9 +379,11 @@ SV * _oload_pow(pTHX_ __bf16 * a, __bf16 * b, SV * third) {
   __bf16 * f_obj;
   SV * obj_ref, * obj;
   mpfr_t a0, b0;
+  int inex;
+  SET_EMIN_EMAX
 
-  mpfr_init2(a0, 8);
-  mpfr_init2(b0, 8);
+  mpfr_init2(a0, TYPE_PRECISION);
+  mpfr_init2(b0, TYPE_PRECISION);
 
   mpfr_set_bfloat16(a0, *a, MPFR_RNDN);
   mpfr_set_bfloat16(b0, *b, MPFR_RNDN);
@@ -353,10 +393,13 @@ SV * _oload_pow(pTHX_ __bf16 * a, __bf16 * b, SV * third) {
   obj_ref = newSV(0);
   obj = newSVrv(obj_ref, "Math::Bfloat16");
 
-  if(SvTRUE_nomg_NN(third)) mpfr_pow(a0, b0, a0, MPFR_RNDN);  /* b ** a */
-  else  mpfr_pow(a0, a0, b0, MPFR_RNDN);                      /* a ** b */
+  if(SvTRUE_nomg_NN(third)) inex = mpfr_pow(a0, b0, a0, MPFR_RNDN);  /* b ** a */
+  else inex =  mpfr_pow(a0, a0, b0, MPFR_RNDN);                      /* a ** b */
+
+  mpfr_subnormalize(a0, inex, MPFR_RNDN);
 
   *f_obj = mpfr_get_bfloat16(a0, MPFR_RNDN);
+  RESET_EMIN_EMAX
 
   sv_setiv(obj, INT2PTR(IV,f_obj));
   SvREADONLY_on(obj);
@@ -435,7 +478,7 @@ SV * _oload_int(pTHX_ __bf16 * a, SV * second, SV * third) {
   SV * obj_ref, * obj;
   mpfr_t temp;
 
-  mpfr_init2(temp, 8);
+  mpfr_init2(temp, TYPE_PRECISION);
 
   Newx(f_obj, 1, __bf16);
   if(f_obj == NULL) croak("Failed to allocate memory in _oload_int function");
@@ -457,7 +500,7 @@ SV * _oload_log(pTHX_ __bf16 * a, SV * second, SV * third) {
   SV * obj_ref, * obj;
   mpfr_t temp;
 
-  mpfr_init2(temp, 8);
+  mpfr_init2(temp, TYPE_PRECISION);
 
   Newx(f_obj, 1, __bf16);
   if(f_obj == NULL) croak("Failed to allocate memory in _oload_log function");
@@ -479,7 +522,7 @@ SV * _oload_exp(pTHX_ __bf16 * a, SV * second, SV * third) {
   SV * obj_ref, * obj;
   mpfr_t temp;
 
-  mpfr_init2(temp, 8);
+  mpfr_init2(temp, TYPE_PRECISION);
 
   Newx(f_obj, 1, __bf16);
   if(f_obj == NULL) croak("Failed to allocate memory in _oload_exp function");
@@ -501,7 +544,7 @@ SV * _oload_sqrt(pTHX_ __bf16 * a, SV * second, SV * third) {
   SV * obj_ref, * obj;
   mpfr_t temp;
 
-  mpfr_init2(temp, 8);
+  mpfr_init2(temp, TYPE_PRECISION);
 
   Newx(f_obj, 1, __bf16);
   if(f_obj == NULL) croak("Failed to allocate memory in _oload_sqrt function");
@@ -516,6 +559,31 @@ SV * _oload_sqrt(pTHX_ __bf16 * a, SV * second, SV * third) {
   sv_setiv(obj, INT2PTR(IV,f_obj));
   SvREADONLY_on(obj);
   return obj_ref;
+}
+
+void unpack_hex(pTHX_ __bf16 * f) {
+  dXSARGS;
+  int i;
+  char * buff;
+  __bf16 bf16 = *f;
+  void * p = &bf16;
+
+  Newx(buff, 4, char);
+  if(buff == NULL) croak("Failed to allocate memory in _unpack_hex");
+
+  sp = mark;
+
+#ifdef WE_HAVE_BENDIAN /* Big Endian architecture */
+  for (i = 0; i < 2; i++) {
+#else
+  for (i = 1; i >= 0; i--) {
+#endif
+    sprintf(buff, "%02X", ((unsigned char*)p)[i]);
+    XPUSHs(sv_2mortal(newSVpv(buff, 0)));
+  }
+  PUTBACK;
+  Safefree(buff);
+  XSRETURN(2);
 }
 
 void DESTROY(SV * obj) {
@@ -787,6 +855,22 @@ _oload_sqrt (a, second, third)
 CODE:
   RETVAL = _oload_sqrt (aTHX_ a, second, third);
 OUTPUT:  RETVAL
+
+void
+unpack_hex (f)
+	__bf16 *	f
+        PREINIT:
+        I32* temp;
+        PPCODE:
+        temp = PL_markstack_ptr++;
+        unpack_hex(aTHX_ f);
+        if (PL_markstack_ptr != temp) {
+          /* truly void, because dXSARGS not invoked */
+          PL_markstack_ptr = temp;
+          XSRETURN_EMPTY; /* return empty stack */
+        }
+        /* must have used dXSARGS; list context implied */
+        return;
 
 void
 DESTROY (obj)

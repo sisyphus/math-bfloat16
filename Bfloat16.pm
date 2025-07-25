@@ -50,6 +50,7 @@ if(Math::MPFR::MPFR_VERSION < 262912 || !Math::MPFR::Rmpfr_buildopt_bfloat16_p()
 
 my @tagged = qw( toNV toMPFR
                  is_bfloat16_nan is_bfloat16_inf is_bfloat16_zero
+                 unpack_hex
                );
 
 @Math::Bfloat16::EXPORT = ();
@@ -258,3 +259,23 @@ sub oload_interp {
 1;
 
 __END__
+###############################
+  emin = mpfr_get_emin();
+  emax = mpfr_get_emax();
+
+  mpfr_set_emin(-1073);
+  mpfr_set_emax(1024);
+
+  inex = mpfr_strtofr(temp, SvPV_nolen(str), NULL, 0, GMP_RNDN);
+  mpfr_subnormalize(temp, inex, GMP_RNDN);
+
+  mpfr_set_emin(emin);
+  mpfr_set_emax(emax);
+
+  d = mpfr_get_d(temp, GMP_RNDN);
+##############################
+
+Notes:
+min subnormal is       2 ** -133 (= 9.184e-41). Implies we want mpfr_set_emin(-132).
+max finite power of is 2 **  127 (= 1.701e38).  Implies we want mpfr_set_emax( 128).
+precision of the mpfr_t should  be 8.
