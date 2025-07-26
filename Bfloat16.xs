@@ -253,17 +253,17 @@ SV * _fromGMPq(pTHX_ mpq_t * in) {
   return obj_ref;
 }
 
-SV * toNV(pTHX_  __bf16 * obj) {
+SV * bf16_to_NV(pTHX_  __bf16 * obj) {
    return newSVnv(*obj);
 }
 
-SV * toMPFR(pTHX_ __bf16 * f16_obj) {
+SV * bf16_to_MPFR(pTHX_ __bf16 * f16_obj) {
 
   mpfr_t * mpfr_t_obj;
   SV * obj_ref, * obj;
 
   Newx(mpfr_t_obj, 1, mpfr_t);
-  if(mpfr_t_obj == NULL) croak("Failed to allocate memory in toMPFR function");
+  if(mpfr_t_obj == NULL) croak("Failed to allocate memory in bf16_to_MPFR function");
   obj_ref = newSV(0);
   obj = newSVrv(obj_ref, "Math::MPFR");
 
@@ -561,7 +561,7 @@ SV * _oload_sqrt(pTHX_ __bf16 * a, SV * second, SV * third) {
   return obj_ref;
 }
 
-void unpack_hex(pTHX_ __bf16 * f) {
+void unpack_bf16_hex(pTHX_ __bf16 * f) {
   dXSARGS;
   int i;
   char * buff;
@@ -569,7 +569,7 @@ void unpack_hex(pTHX_ __bf16 * f) {
   void * p = &bf16;
 
   Newx(buff, 4, char);
-  if(buff == NULL) croak("Failed to allocate memory in _unpack_hex");
+  if(buff == NULL) croak("Failed to allocate memory in unpack_bf16_hex");
 
   sp = mark;
 
@@ -669,17 +669,17 @@ CODE:
 OUTPUT:  RETVAL
 
 SV *
-toNV (obj)
+bf16_to_NV (obj)
 	__bf16 *	obj
 CODE:
-  RETVAL = toNV (aTHX_ obj);
+  RETVAL = bf16_to_NV (aTHX_ obj);
 OUTPUT:  RETVAL
 
 SV *
-toMPFR (f16_obj)
+bf16_to_MPFR (f16_obj)
 	__bf16 *	f16_obj
 CODE:
-  RETVAL = toMPFR (aTHX_ f16_obj);
+  RETVAL = bf16_to_MPFR (aTHX_ f16_obj);
 OUTPUT:  RETVAL
 
 SV *
@@ -857,13 +857,13 @@ CODE:
 OUTPUT:  RETVAL
 
 void
-unpack_hex (f)
+unpack_bf16_hex (f)
 	__bf16 *	f
         PREINIT:
         I32* temp;
         PPCODE:
         temp = PL_markstack_ptr++;
-        unpack_hex(aTHX_ f);
+        unpack_bf16_hex(aTHX_ f);
         if (PL_markstack_ptr != temp) {
           /* truly void, because dXSARGS not invoked */
           PL_markstack_ptr = temp;

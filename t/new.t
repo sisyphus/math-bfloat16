@@ -18,18 +18,18 @@ my @inputs = ('1.5', '-1.75', 2.625, Math::MPFR->new(3.875), 42);
 push(@inputs, Math::GMPq->new('3/4')) if $have_gmpq;
 
 for my $in(@inputs) {
-  cmp_ok(toNV(Math::Bfloat16->new($in)), '==', $in, "toNV: $in ok");
-  cmp_ok(toMPFR(Math::Bfloat16->new($in)), '==', $in, "toMPFR: $in ok");
+  cmp_ok(bf16_to_NV(Math::Bfloat16->new($in)), '==', $in, "bf16_to_NV: $in ok");
+  cmp_ok(bf16_to_MPFR(Math::Bfloat16->new($in)), '==', $in, "bf16_to_MPFR: $in ok");
 
-  cmp_ok(toNV(Math::Bfloat16->new(-$in)), '==', -$in, "toNV: -$in ok");
-  cmp_ok(toMPFR(Math::Bfloat16->new(-$in)), '==', -$in, "toMPFR: -$in ok");
+  cmp_ok(bf16_to_NV(Math::Bfloat16->new(-$in)), '==', -$in, "bf16_to_NV: -$in ok");
+  cmp_ok(bf16_to_MPFR(Math::Bfloat16->new(-$in)), '==', -$in, "bf16_to_MPFR: -$in ok");
 }
 
 if($have_gmpf) {
   # There's no overloading of '==' between Math::MPFR and Math::GMPf
   my $in = Math::GMPf->new(5.25);
-  cmp_ok(toMPFR(Math::Bfloat16->new($in)),  '==', Math::MPFR->new($in),  "toMPFR from GMPf: $in ok");
-  cmp_ok(toMPFR(Math::Bfloat16->new(-$in)), '==', Math::MPFR->new(-$in), "toMPFR from GMPf: -$in ok");
+  cmp_ok(bf16_to_MPFR(Math::Bfloat16->new($in)),  '==', Math::MPFR->new($in),  "bf16_to_MPFR from GMPf: $in ok");
+  cmp_ok(bf16_to_MPFR(Math::Bfloat16->new(-$in)), '==', Math::MPFR->new(-$in), "bf16_to_MPFR from GMPf: -$in ok");
 }
 
 cmp_ok(ref(Math::Bfloat16->new()), 'eq', 'Math::Bfloat16', "Math::Bfloat16->new() returns a Math::Bfloat16 object");

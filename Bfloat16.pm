@@ -25,13 +25,16 @@ use overload
 '<=>' => \&oload_spaceship,
 
 'abs'  => \&oload_abs,
+'""'   => \&oload_interp,
+ # The above overload subs are in Bfloat16.pm.
+ # The below overload subs are in Bfloat16.xs.
 'sqrt' => \&_oload_sqrt,
 'exp'  => \&_oload_exp,
 'log'  => \&_oload_log,
 'int'  => \&_oload_int,
 '!'    => \&_oload_not,
 'bool' => \&_oload_bool,
-'""'   => \&oload_interp,
+
 ;
 
 require Exporter;
@@ -48,9 +51,9 @@ if(Math::MPFR::MPFR_VERSION < 262912 || !Math::MPFR::Rmpfr_buildopt_bfloat16_p()
   exit 0;
 }
 
-my @tagged = qw( toNV toMPFR
+my @tagged = qw( bf16_to_NV bf16_to_MPFR
                  is_bfloat16_nan is_bfloat16_inf is_bfloat16_zero
-                 unpack_hex
+                 unpack_bf16_hex
                );
 
 @Math::Bfloat16::EXPORT = ();
@@ -251,7 +254,7 @@ sub oload_spaceship {
 }
 
 sub oload_interp {
-   my $ret = Math::MPFR::Rmpfr_get_str(toMPFR($_[0]), 10, 0, MPFR_RNDN);
+   my $ret = Math::MPFR::Rmpfr_get_str(bf16_to_MPFR($_[0]), 10, 0, MPFR_RNDN);
    $ret =~ s/\@//g;
    return $ret;
 }

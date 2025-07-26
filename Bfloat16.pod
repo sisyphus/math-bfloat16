@@ -1,111 +1,110 @@
+
 =pod
 
 =head1 NAME
 
-Math::Bfloat16 - perl interface to the __bf16 floating point type.
+ Math::Bfloat16 - perl interface to the __bf16 floating point type.
 
 =head1 DEPENDENCIES
 
-   This module needs the MPFR and GMP C libraries. (Install the
-   GMP library first as it is a pre-requisite for MPFR.)
+ This module needs the MPFR and GMP C libraries. (Install the
+ GMP library first as it is a pre-requisite for MPFR.)
 
-   The GMP library is available from https://gmplib.org .
-   The MPFR library is available from https://www.mpfr.org .
+ The GMP library is available from https://gmplib.org .
+ The MPFR library is available from https://www.mpfr.org .
 
 =head1 DESCRIPTION
 
-   This module enables us to perform __bf16 (brain float) arithmetic
-   in perl.
+ Perform __bf16 (brain float) arithmetic  in perl.
 
 =head1 SYNOPSIS
 
-   Values can be assigned as an IV (1414164) or a PV ("1.414164"),
-   or an NV(1.414164) or a Math::MPFR object
-   (Math::MPFR->new("1.414164")):
-   my $val = '1.41416';
-   my $obj = Math::Bfloat16->new($val);
-   print "$obj\n"; # prints 1.414.
+ Values can be assigned either as an IV (42), a PV ("1.414164"), an
+ NV (1.414164), a Math::MPFR object (Math::MPFR->new("1.414164")),
+ a Math::GMPq object (Math::GMPq->new("1.414164')) or a Math::GMPf
+ object (Math::GMPf->new("1.414164")).
+ And the values held within a Math::Bfloat16 object can be
+ interpolated by double-quoting the object :
 
-   These objects have only 8 bits of precision.
-   Maximum finite value is 1.701e38.
-   Minimum positive non-zero value is 9.184-41.
+ my $val = '1.41416';
+ my $obj = Math::Bfloat16->new($val);
+ print "$obj\n"; # prints 1.414.
+
+ All input values are effectively cast to a __bf16 value, rounded
+ to nearest, with ties to even.
+
+ NOTE !!!!!!! :
+  If you want to assign a specific value (eg 1.96500000000000014e2)
+  it is better to assign it as a PV. It will then be rounded only
+  once to a __bf16. If you first assign that value to something else
+  (eg an NV), and then assign it to a Math::Bfloat16 object, the
+  value can be rounded twice. In the following example the value is
+  firstly rounded to an NV, and secondly from the NV to the 8-bit
+  precision Math::Bfloat16 object. EXAMPLE (assuming that the NV
+  is of type 'double'):
+
+   my $pv = '1.96500000000000014e2';
+   my $nv =  1.96500000000000014e2 ;
+   print Math::Bfloat16->new($pv); # 1.97e2 (rounded only once)
+   print Math::Bfloat16->new($nv); # 1.96e2 (rounded twice)
+
+  Mostly it won't matter, but we see here that it sometimes can.
+
+ The __bf16 has only 8 bits of precision.
+ Maximum finite value is 1.701e38.
+ Minimum positive non-zero value is 9.184-41.
 
 =head1 ARITHMETIC
 
-   All arithmetic is done via the overloading of the '+',
-   '-', '*', '/', '**'/, '+=', '-=', '*=', '/=', and '**='. The 'log',
-   'exp', 'sqrt', 'abs' and 'int' functions are also overloaded.And
-   the values held within a Math::Bfloat16 object can be interpolated
-   by double-quoting the object -eg:
+ All arithmetic is done via the overloading of the
+ '+', '-', '*', '/', '**'/, '+=', '-=', '*=', '/=', and '**='
+ operators.
 
-   my $obj = sqrt(Math::Bfloat16->new(2); print "$obj"; # prints 1.414
+ The 'log', 'exp', 'sqrt', 'abs' and 'int' functions are also
+ overloaded.
 
-   The functions (should you wish to call them) that these overloaded
-   operations call are, as set out in Bfloat16.pm:
+=head1 COMPARISON
 
-    '+'  => oload_add,
-    '-'  => oload_sub,
-    '*'  => oload_mul,
-    '/'  => oload_div,
-    '**' => oload_pow,
+ The following comparison operators are also overloaded :
+ '==', '!=', '>', '>=', '<', '<=' and '<=>'
 
-    '+='  => oload_add_eq,
-    '-='  => oload_sub_eq,
-    '*='  => oload_mul_eq,
-    '/='  => oload_div_eq,
-    '**=' => oload_pow,
+ Also, the following boolean operations:
+  '!' and 'bool'
 
-    'abs'  => oload_abs,
-    'sqrt' => _oload_sqrt,
-    'exp'  => _oload_exp,
-    'log'  => _oload_log,
-    'int'  => _oload_int,
+=head1 MISCELLANEOUS FUNCTIONS
 
-    '""'  => oload_interp,
-
-   The comparison operators are also overloaded - as follows:
-
-    '=='  => oload_equiv,
-    '!='  => oload_not_equiv,
-    '>'   => oload_gt,
-    '>='  => oload_gte,
-    '<'   => oload_lt,
-    '<='  => oload_lte,
-    '<=>' => oload_spaceship,
-
-   And the boolean operations:
-    '!'    => _oload_not,
-    'bool' => _oload_bool,
-
-=head1 OTHER FUNCTIONS
-
-    $IV = is_bfloat16_nan($obj);
+    $iv = is_bfloat16_nan($obj);
      Return 1 if the object holds a NaN. Else return 0.
 
-    $IV = is_bfloat16_inf($obj);
+    $iv = is_bfloat16_inf($obj);
      Return 1 if the object holds a +Inf.
      Return -1 if the object holds a -Inf.
      Otherwise return 0.
 
-    $IV = is_bfloat16_zero($obj);
+    $iv = is_bfloat16_zero($obj);
      Return 1 if the object holds a zero that is not -0.
      Return -1 if the object holds a -0.
      Otherwise return 0.
 
-   $NV = toNV($obj);
+   $nv = bf16_to_NV($obj);
     Return the value of $obj as an NV.
+    $nv then holds exactly the same value as $obj.
 
-   $MPFR_OBJECT = toMPFR($obj);
-    Return the value of $obj as a Math::MPFR object. This Math::MPFR
-    object holds exactly the same value as oload_interp() examines.
-    Hence, the instructions "print $obj;" and "print toMPFR($obj)"
-    will produce exactly the same output.
+   $MPFR_OBJECT = bf16_to_MPFR($obj);
+    Return the value of $obj as an 8-bit precision Math::MPFR object.
+    This Math::MPFR object holds exactly the same value as $obj.
+    This is the function that the overloading of interpolation calls.
+    The instructions "print $obj;" and "print bf16_to_MPFR($obj);"
+    will therefore produce exactly the same output.
 
-   $string = unpack_hex($obj);
-    Unpack the value held internally as a string of hex characters.
+   $string = unpack_bf16_hex($obj);
+    Unpack the __bf16 encoding of the value held by $obj as a string
+    of hex characters.
     For example, unpack denorm min and +Inf:
-      print unpack_hex(Math::Bfloat->new(2) ** -133); # 0001
-      print unpack_hex(Math::Bfloat->new(2) ** 128); # 7F80
+      print unpack_bf16_hex(Math::Bfloat->new(0);          # 0000
+      print unpack_bf16_hex(Math::Bfloat->new('-0');       # 8000
+      print unpack_bf16_hex(Math::Bfloat->new(2) ** -133); # 0001
+      print unpack_bf16_hex(Math::Bfloat->new(2) ** 128);  # 7F80 (+inf)
 
 
 =head1 LICENSE

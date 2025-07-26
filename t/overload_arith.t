@@ -251,8 +251,8 @@ cmp_ok("$stringified", 'eq', '1.414', "sprintf returns '1.414'");
 
 my $bf16_obj = Math::Bfloat16->new('1025.123');
 my $interp = "$bf16_obj";
-my $testing = toMPFR($bf16_obj);
-cmp_ok($interp, 'eq', "$testing", "interpolation examines object returned by toMPFR()");
+my $testing = bf16_to_MPFR($bf16_obj);
+cmp_ok($interp, 'eq', "$testing", "interpolation examines object returned by bf16_to_MPFR()");
 
 
 ###############
