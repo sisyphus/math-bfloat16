@@ -17,15 +17,24 @@
 #define TYPE_PRECISION 8
 #define TYPE_EMIN -132
 #define TYPE_EMAX 128
+
+/* Bfloatxs.pm sets emin and emax to the desired values so we  *
+ * can now define SET_EMIN_EMAX and RESET_EMIN_EMAX to nothing */
+#define SET_EMIN_EMAX
+#define RESET_EMIN_EMAX
+
+/*
 #define SET_EMIN_EMAX \
   mpfr_prec_t emin = mpfr_get_emin(); \
   mpfr_prec_t emax = mpfr_get_emax(); \
   mpfr_set_emin(TYPE_EMIN);           \
   mpfr_set_emax(TYPE_EMAX);
-
+*/
+/*
 #define RESET_EMIN_EMAX \
   mpfr_set_emin(emin); \
   mpfr_set_emax(emax);
+*/
 
 SV * _itsa(pTHX_ SV * a) {
   if(SvIOK(a)) {
@@ -41,17 +50,13 @@ SV * _itsa(pTHX_ SV * a) {
     if(strEQ(h, "Math::MPFR")) return newSVuv(5);
     if(strEQ(h, "Math::GMPf")) return newSVuv(6);
     if(strEQ(h, "Math::GMPq")) return newSVuv(7);
-    if(strEQ(h, "Math::GMPz")) return newSVuv(8);
-    if(strEQ(h, "Math::GMP")) return newSVuv(9);
-
     if(strEQ(h, "Math::Bfloat16")) return newSVuv(20);
-    if(strEQ(h, "Math::Float16")) return newSVuv(21);
-    if(strEQ(h, "Math::Float32")) return newSVuv(22);
+    croak("The Math::Bfloat16::_itsa XSub does not accept %s objects.", h);
   }
-  return newSVuv(0);
+  croak("The Math::Bfloat16::_itsa XSub has been given an invalid argument (probably undefined)");
 }
 
-int is_bfloat16_nan(__bf16 * obj) {
+int is_bf16_nan(__bf16 * obj) {
     int ret;
     mpfr_t temp;
     mpfr_init2(temp, TYPE_PRECISION);
@@ -62,7 +67,7 @@ int is_bfloat16_nan(__bf16 * obj) {
     return ret;
 }
 
-int is_bfloat16_inf(__bf16 * obj) {
+int is_bf16_inf(__bf16 * obj) {
     int ret;
     mpfr_t temp;
     mpfr_init2(temp, TYPE_PRECISION);
@@ -77,7 +82,7 @@ int is_bfloat16_inf(__bf16 * obj) {
     return ret;
 }
 
-int is_bfloat16_zero(__bf16 * obj) {
+int is_bf16_zero(__bf16 * obj) {
     int ret;
     mpfr_t temp;
     mpfr_init2(temp, TYPE_PRECISION);
@@ -276,6 +281,36 @@ SV * bf16_to_MPFR(pTHX_ __bf16 * f16_obj) {
 
 }
 
+void _bf16_set(__bf16 * a, __bf16 * b) {
+  *a = *b;
+}
+
+void bf16_set_nan(__bf16 * a) {
+  mpfr_t t;
+  mpfr_init2(t, TYPE_PRECISION);
+
+  *a = mpfr_get_bfloat16(t, MPFR_RNDN);
+  mpfr_clear(t);
+}
+
+void bf16_set_inf(__bf16 * a, int is_pos) {
+  mpfr_t t;
+  mpfr_init2(t, TYPE_PRECISION);
+  mpfr_set_inf(t, is_pos);
+
+  *a = mpfr_get_bfloat16(t, MPFR_RNDN);
+  mpfr_clear(t);
+}
+
+void bf16_set_zero(__bf16 * a, int is_pos) {
+  mpfr_t t;
+  mpfr_init2(t, TYPE_PRECISION);
+  mpfr_set_zero(t, is_pos);
+
+  *a = mpfr_get_bfloat16(t, MPFR_RNDN);
+  mpfr_clear(t);
+}
+
 SV * _oload_add(pTHX_ __bf16 * a, __bf16 * b, SV * third) {
 
   __bf16 * f_obj;
@@ -454,7 +489,7 @@ int _oload_lte(pTHX_ __bf16 * a, __bf16 * b, SV * third) {
 
 SV * _oload_spaceship(pTHX_ __bf16 * a, __bf16 * b, SV * third) {
   if(*a == *b) return newSViv(0);
-  if(is_bfloat16_nan(a) || is_bfloat16_nan(b)) return &PL_sv_undef;
+  if(is_bf16_nan(a) || is_bf16_nan(b)) return &PL_sv_undef;
   if(SvTRUE_nomg_NN(third)) {
     if(*b > *a) return newSViv(1);
     return newSViv(-1);
@@ -464,12 +499,12 @@ SV * _oload_spaceship(pTHX_ __bf16 * a, __bf16 * b, SV * third) {
 }
 
 int _oload_not(__bf16 * a, SV * second, SV * third) {
-  if(is_bfloat16_nan(a) || *a == 0) return 1;
+  if(is_bf16_nan(a) || *a == 0) return 1;
   return 0;
 }
 
 int _oload_bool(__bf16 * a, SV * second, SV * third) {
-  if(is_bfloat16_nan(a) || *a == 0) return 0;
+  if(is_bf16_nan(a) || *a == 0) return 0;
   return 1;
 }
 
@@ -586,6 +621,48 @@ void unpack_bf16_hex(pTHX_ __bf16 * f) {
   XSRETURN(2);
 }
 
+void bf16_nextabove(__bf16 * a) {
+  mpfr_t temp;
+  SET_EMIN_EMAX
+  mpfr_init2(temp, TYPE_PRECISION);
+
+  mpfr_set_bfloat16(temp, *a, MPFR_RNDN);
+  mpfr_nextabove(temp);
+  *a = mpfr_get_bfloat16(temp, MPFR_RNDN);
+  mpfr_subnormalize(temp, 0, MPFR_RNDN);
+  RESET_EMIN_EMAX
+  mpfr_clear(temp);
+}
+
+void bf16_nextbelow(__bf16 * a) {
+  mpfr_t temp;
+  SET_EMIN_EMAX
+  mpfr_init2(temp, TYPE_PRECISION);
+
+  mpfr_set_bfloat16(temp, *a, MPFR_RNDN);
+  mpfr_nextbelow(temp);
+  *a = mpfr_get_bfloat16(temp, MPFR_RNDN);
+  mpfr_subnormalize(temp, 0, MPFR_RNDN);
+  RESET_EMIN_EMAX
+  mpfr_clear(temp);
+}
+
+SV * _XS_get_emin(pTHX) {
+  return newSViv(mpfr_get_emin());
+}
+
+SV * _XS_get_emax(pTHX) {
+  return newSViv(mpfr_get_emax());
+}
+
+void _XS_set_emin(pTHX_ SV * in) {
+  mpfr_set_emin((mpfr_exp_t)SvIV(in));
+}
+
+void _XS_set_emax(pTHX_ SV * in) {
+  mpfr_set_emax((mpfr_exp_t)SvIV(in));
+}
+
 void DESTROY(SV * obj) {
   /* printf("Destroying object\n"); *//* debugging check */
   Safefree(INT2PTR(__bf16 *, SvIVX(SvRV(obj))));
@@ -608,15 +685,15 @@ CODE:
 OUTPUT:  RETVAL
 
 int
-is_bfloat16_nan (obj)
+is_bf16_nan (obj)
 	__bf16 *	obj
 
 int
-is_bfloat16_inf (obj)
+is_bf16_inf (obj)
 	__bf16 *	obj
 
 int
-is_bfloat16_zero (obj)
+is_bf16_zero (obj)
 	__bf16 *	obj
 
 SV *
@@ -681,6 +758,73 @@ bf16_to_MPFR (f16_obj)
 CODE:
   RETVAL = bf16_to_MPFR (aTHX_ f16_obj);
 OUTPUT:  RETVAL
+
+void
+_bf16_set (a, b)
+	__bf16 *	a
+	__bf16 *	b
+        PREINIT:
+        I32* temp;
+        PPCODE:
+        temp = PL_markstack_ptr++;
+        _bf16_set(a, b);
+        if (PL_markstack_ptr != temp) {
+          /* truly void, because dXSARGS not invoked */
+          PL_markstack_ptr = temp;
+          XSRETURN_EMPTY; /* return empty stack */
+        }
+        /* must have used dXSARGS; list context implied */
+        return;
+
+void
+bf16_set_nan (a)
+	__bf16 *	a
+        PREINIT:
+        I32* temp;
+        PPCODE:
+        temp = PL_markstack_ptr++;
+        bf16_set_nan(a);
+        if (PL_markstack_ptr != temp) {
+          /* truly void, because dXSARGS not invoked */
+          PL_markstack_ptr = temp;
+          XSRETURN_EMPTY; /* return empty stack */
+        }
+        /* must have used dXSARGS; list context implied */
+        return;
+
+void
+bf16_set_inf (a, is_pos)
+	__bf16 *	a
+	int	is_pos
+        PREINIT:
+        I32* temp;
+        PPCODE:
+        temp = PL_markstack_ptr++;
+        bf16_set_inf(a, is_pos);
+        if (PL_markstack_ptr != temp) {
+          /* truly void, because dXSARGS not invoked */
+          PL_markstack_ptr = temp;
+          XSRETURN_EMPTY; /* return empty stack */
+        }
+        /* must have used dXSARGS; list context implied */
+        return;
+
+void
+bf16_set_zero (a, is_pos)
+	__bf16 *	a
+	int	is_pos
+        PREINIT:
+        I32* temp;
+        PPCODE:
+        temp = PL_markstack_ptr++;
+        bf16_set_zero(a, is_pos);
+        if (PL_markstack_ptr != temp) {
+          /* truly void, because dXSARGS not invoked */
+          PL_markstack_ptr = temp;
+          XSRETURN_EMPTY; /* return empty stack */
+        }
+        /* must have used dXSARGS; list context implied */
+        return;
 
 SV *
 _oload_add (a, b, third)
@@ -864,6 +1008,84 @@ unpack_bf16_hex (f)
         PPCODE:
         temp = PL_markstack_ptr++;
         unpack_bf16_hex(aTHX_ f);
+        if (PL_markstack_ptr != temp) {
+          /* truly void, because dXSARGS not invoked */
+          PL_markstack_ptr = temp;
+          XSRETURN_EMPTY; /* return empty stack */
+        }
+        /* must have used dXSARGS; list context implied */
+        return;
+
+void
+bf16_nextabove (a)
+	__bf16 *	a
+        PREINIT:
+        I32* temp;
+        PPCODE:
+        temp = PL_markstack_ptr++;
+        bf16_nextabove(a);
+        if (PL_markstack_ptr != temp) {
+          /* truly void, because dXSARGS not invoked */
+          PL_markstack_ptr = temp;
+          XSRETURN_EMPTY; /* return empty stack */
+        }
+        /* must have used dXSARGS; list context implied */
+        return;
+
+void
+bf16_nextbelow (a)
+	__bf16 *	a
+        PREINIT:
+        I32* temp;
+        PPCODE:
+        temp = PL_markstack_ptr++;
+        bf16_nextbelow(a);
+        if (PL_markstack_ptr != temp) {
+          /* truly void, because dXSARGS not invoked */
+          PL_markstack_ptr = temp;
+          XSRETURN_EMPTY; /* return empty stack */
+        }
+        /* must have used dXSARGS; list context implied */
+        return;
+
+SV *
+_XS_get_emin ()
+CODE:
+  RETVAL = _XS_get_emin (aTHX);
+OUTPUT:  RETVAL
+
+
+SV *
+_XS_get_emax ()
+CODE:
+  RETVAL = _XS_get_emax (aTHX);
+OUTPUT:  RETVAL
+
+
+void
+_XS_set_emin (in)
+	SV *	in
+        PREINIT:
+        I32* temp;
+        PPCODE:
+        temp = PL_markstack_ptr++;
+        _XS_set_emin(aTHX_ in);
+        if (PL_markstack_ptr != temp) {
+          /* truly void, because dXSARGS not invoked */
+          PL_markstack_ptr = temp;
+          XSRETURN_EMPTY; /* return empty stack */
+        }
+        /* must have used dXSARGS; list context implied */
+        return;
+
+void
+_XS_set_emax (in)
+	SV *	in
+        PREINIT:
+        I32* temp;
+        PPCODE:
+        temp = PL_markstack_ptr++;
+        _XS_set_emax(aTHX_ in);
         if (PL_markstack_ptr != temp) {
           /* truly void, because dXSARGS not invoked */
           PL_markstack_ptr = temp;

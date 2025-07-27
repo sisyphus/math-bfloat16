@@ -51,8 +51,37 @@
   Mostly it won't matter, but we see here that it sometimes can.
 
  The __bf16 has only 8 bits of precision.
- Maximum finite value is 1.701e38.
+ Maximum finite value is 3.39e38.
  Minimum positive non-zero value is 9.184-41.
+
+=head1 ASSIGNMENT FUNCTIONS
+
+    $obj ->new($[val]);
+    $obj = new([$val]);
+     Set $obj to a Math::Bfloat16 object with value $val.
+     If $val is not provided, the $obj has the value NaN.
+     $val cab be an IV (integer), an NV (perl float), a PV (string),
+     a Math::Bfloat16 object, a Math::MPFR object, a Math::GMPf
+     object or a Math::GMPq object.
+     See the SYNOPSIS section (above) for some elaboration,
+     If necessay, $val will be rounded (to nearest, ties to even)
+     to fit into the __bf16 type.
+
+    bf16_set($obj, $val);
+     Set the value of $obj to the value specified by $val (rounded
+     to nearest, ties to even if necessary.)
+     $val can be any one of the types that new() accepts.
+
+    bf16_set_nan($obj);
+     Se the value of $obj to NaN.
+
+    bf16_set_inf($obj, $iv);
+     If $iv is greater than or equal to 0, then set $obj to +Inf.
+     Else set $obj to -Inf.
+
+    bf16_set_zero($obj, $iv);
+     If $iv is greater than or equal to 0, then set $obj to 0.
+     Else set $obj to -0.
 
 =head1 ARITHMETIC
 
@@ -71,17 +100,37 @@
  Also, the following boolean operations:
   '!' and 'bool'
 
+=head1 OUTPUT FUNCTIONS
+
+    $string = "$obj";
+     Set $str to the value of $obj in decimal scientific
+     notation (eg 1.234e-2).
+
+    print $obj;
+    print "$obj";
+     Either form will display the string returned by the
+     interpolating of $obj.
+
+   $string = unpack_bf16_hex($obj);
+    Unpack the __bf16 encoding of the value held by $obj as a string
+    of hex characters.
+    For example, unpack denorm min and +Inf:
+      print unpack_bf16_hex(Math::Bfloat->new(0);          # 0000
+      print unpack_bf16_hex(Math::Bfloat->new('-0');       # 8000
+      print unpack_bf16_hex(Math::Bfloat->new(2) ** -133); # 0001
+      print unpack_bf16_hex(Math::Bfloat->new(2) ** 128);  # 7F80 (+inf)
+
 =head1 MISCELLANEOUS FUNCTIONS
 
-    $iv = is_bfloat16_nan($obj);
+    $iv = is_bf16_nan($obj);
      Return 1 if the object holds a NaN. Else return 0.
 
-    $iv = is_bfloat16_inf($obj);
+    $iv = is_bf16_inf($obj);
      Return 1 if the object holds a +Inf.
      Return -1 if the object holds a -Inf.
      Otherwise return 0.
 
-    $iv = is_bfloat16_zero($obj);
+    $iv = is_bf16_zero($obj);
      Return 1 if the object holds a zero that is not -0.
      Return -1 if the object holds a -0.
      Otherwise return 0.
@@ -96,16 +145,6 @@
     This is the function that the overloading of interpolation calls.
     The instructions "print $obj;" and "print bf16_to_MPFR($obj);"
     will therefore produce exactly the same output.
-
-   $string = unpack_bf16_hex($obj);
-    Unpack the __bf16 encoding of the value held by $obj as a string
-    of hex characters.
-    For example, unpack denorm min and +Inf:
-      print unpack_bf16_hex(Math::Bfloat->new(0);          # 0000
-      print unpack_bf16_hex(Math::Bfloat->new('-0');       # 8000
-      print unpack_bf16_hex(Math::Bfloat->new(2) ** -133); # 0001
-      print unpack_bf16_hex(Math::Bfloat->new(2) ** 128);  # 7F80 (+inf)
-
 
 =head1 LICENSE
 

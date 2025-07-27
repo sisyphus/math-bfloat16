@@ -3,6 +3,10 @@ use warnings;
 package Math::Bfloat16;
 use Math::MPFR qw(:mpfr);
 
+use constant bf16_EMIN => -132;
+use constant bf16_EMAX =>  128;
+
+
 use overload
 '+'  => \&oload_add,
 '-'  => \&oload_sub,
@@ -52,7 +56,9 @@ if(Math::MPFR::MPFR_VERSION < 262912 || !Math::MPFR::Rmpfr_buildopt_bfloat16_p()
 }
 
 my @tagged = qw( bf16_to_NV bf16_to_MPFR
-                 is_bfloat16_nan is_bfloat16_inf is_bfloat16_zero
+                 is_bf16_nan is_bf16_inf is_bf16_zero bf16_set_nan bf16_set_inf bf16_set_zero
+                 bf16_set
+                 bf16_nextabove bf16_nextbelow
                  unpack_bf16_hex
                );
 
@@ -72,18 +78,30 @@ my @tagged = qw( bf16_to_NV bf16_to_MPFR
                20 => sub {return _fromBfloat16(shift)},
                );
 
+_XS_set_emin(bf16_EMIN);
+_XS_set_emax(bf16_EMAX);
+
 sub new {
-  shift if (!ref($_[0]) && _itsa($_[0]) == 4 && $_[0] eq "Math::Bfloat16");
-  if(!@_) { return _fromMPFR(Math::MPFR->new());}
-  die "Too many args given to new()" if @_ > 1;
-  my $itsa = _itsa($_[0]);
-  if($itsa) {
-    my $coderef = $Math::Bfloat16::handler{$itsa};
-    return $coderef->($_[0]);
-  }
-  die "Unrecognized 1st argument passed to new() function";
+   shift if (@_ > 0 && !ref($_[0]) && _itsa($_[0]) == 4 && $_[0] eq "Math::Bfloat16");
+   if(!@_) { return _fromMPFR(Math::MPFR->new());}
+   die "Too many args given to new()" if @_ > 1;
+   my $itsa = _itsa($_[0]);
+   if($itsa) {
+     my $coderef = $Math::Bfloat16::handler{$itsa};
+     return $coderef->($_[0]);
+   }
+   die "Unrecognized 1st argument passed to new() function";
 }
 
+sub bf16_set {
+   die "bf16_set expects to receive precisely 2 arguments" if @_ != 2;
+   my $itsa = _itsa($_[1]);
+   if($itsa == 20) { _bf16_set(@_) }
+   else {
+     my $coderef = $Math::Bfloat16::handler{$itsa};
+     _bf16_set( $_[0], $coderef->($_[1]));
+   }
+}
 
 sub oload_add {
    my $itsa = _itsa($_[1]);

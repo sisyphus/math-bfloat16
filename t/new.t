@@ -33,11 +33,11 @@ if($have_gmpf) {
 }
 
 cmp_ok(ref(Math::Bfloat16->new()), 'eq', 'Math::Bfloat16', "Math::Bfloat16->new() returns a Math::Bfloat16 object");
-cmp_ok(ref(Math::Bfloat16::new()), 'eq', 'Math::Bfloat16', "Math::Bfloat16->new() returns a Math::Bfloat16 object");
+cmp_ok(ref(Math::Bfloat16::new()), 'eq', 'Math::Bfloat16', "Math::Bfloat16::new() returns a Math::Bfloat16 object");
 
 
-cmp_ok(is_bfloat16_nan(Math::Bfloat16->new()), '==', 1, "Math::Bfloat16->new() returns NaN");
-cmp_ok(is_bfloat16_nan(Math::Bfloat16::new()), '==', 1, "Math::Bfloat16::new() returns NaN");
+cmp_ok(is_bf16_nan(Math::Bfloat16->new()), '==', 1, "Math::Bfloat16->new() returns NaN");
+cmp_ok(is_bf16_nan(Math::Bfloat16::new()), '==', 1, "Math::Bfloat16::new() returns NaN");
 
 my $obj = Math::Bfloat16->new('1.414');
 cmp_ok(Math::Bfloat16->new($obj), '==', $obj, "new(obj) == obj");
@@ -47,23 +47,23 @@ my $mpfr_obj = Math::MPFR->new();
 Math::MPFR::Rmpfr_set_inf($mpfr_obj, 1);
 #print "$mpfr_obj\n";
 my $pinf = Math::Bfloat16->new($mpfr_obj);
-cmp_ok(is_bfloat16_inf($pinf), '==', 1, "+Inf, as expected");
+cmp_ok(is_bf16_inf($pinf), '==', 1, "+Inf, as expected");
 
 Math::MPFR::Rmpfr_set_inf($mpfr_obj, -1);
 my $ninf = Math::Bfloat16->new($mpfr_obj);
-cmp_ok(is_bfloat16_inf($ninf), '==', -1, "-Inf, as expected");
+cmp_ok(is_bf16_inf($ninf), '==', -1, "-Inf, as expected");
 
 Math::MPFR::Rmpfr_set_si($mpfr_obj, -1, 0);
 my $not_inf = Math::Bfloat16->new($mpfr_obj);
-cmp_ok(is_bfloat16_inf($not_inf), '==', 0, "Not an infinity");
-cmp_ok(is_bfloat16_zero($not_inf), '==', 0, "Not a zero");
+cmp_ok(is_bf16_inf($not_inf), '==', 0, "Not an infinity");
+cmp_ok(is_bf16_zero($not_inf), '==', 0, "Not a zero");
 
 Math::MPFR::Rmpfr_set_zero($mpfr_obj, 1);
 my $pzero = Math::Bfloat16->new($mpfr_obj);
-cmp_ok(is_bfloat16_zero($pzero), '==', 1, "+0, as expected");
+cmp_ok(is_bf16_zero($pzero), '==', 1, "+0, as expected");
 
 Math::MPFR::Rmpfr_set_zero($mpfr_obj, -1);
 my $nzero = Math::Bfloat16->new($mpfr_obj);
-cmp_ok(is_bfloat16_zero($nzero), '==', -1, "-0, as expected");
+cmp_ok(is_bf16_zero($nzero), '==', -1, "-0, as expected");
 
 done_testing();

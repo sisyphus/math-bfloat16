@@ -29,30 +29,30 @@ my $nan = Math::Bfloat16->new();
 
 for my $v (@inputs) {
   my $add = $nan + $v;
-  cmp_ok(is_bfloat16_nan($add), '==', 1, "NaN + $v is NaN");
+  cmp_ok(is_bf16_nan($add), '==', 1, "NaN + $v is NaN");
 
   my $mul = $nan * $v;
-  cmp_ok(is_bfloat16_nan($mul), '==', 1, "NaN * $v is NaN");
+  cmp_ok(is_bf16_nan($mul), '==', 1, "NaN * $v is NaN");
 
   my $sub = $nan - $v;
-  cmp_ok(is_bfloat16_nan($sub), '==', 1, "NaN - $v is NaN");
+  cmp_ok(is_bf16_nan($sub), '==', 1, "NaN - $v is NaN");
 
   my $div = $nan / $v;
-  cmp_ok(is_bfloat16_nan($div), '==', 1, "NaN / $v is NaN");
+  cmp_ok(is_bf16_nan($div), '==', 1, "NaN / $v is NaN");
 }
 
 for my $v (@inputs) {
   my $add = $v + $nan;
-  cmp_ok(is_bfloat16_nan($add), '==', 1, "$v + NaN is NaN");
+  cmp_ok(is_bf16_nan($add), '==', 1, "$v + NaN is NaN");
 
   my $mul = $v * $nan;
-  cmp_ok(is_bfloat16_nan($mul), '==', 1, "$v * NaN  is NaN");
+  cmp_ok(is_bf16_nan($mul), '==', 1, "$v * NaN  is NaN");
 
   my $sub = $v - $nan;
-  cmp_ok(is_bfloat16_nan($sub), '==', 1, "$v - NaN is NaN");
+  cmp_ok(is_bf16_nan($sub), '==', 1, "$v - NaN is NaN");
 
   my $div = $v / $nan;
-  cmp_ok(is_bfloat16_nan($div), '==', 1, "$v / NaN is NaN");
+  cmp_ok(is_bf16_nan($div), '==', 1, "$v / NaN is NaN");
 }
 
 my $index = scalar(@inputs);
