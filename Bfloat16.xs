@@ -18,11 +18,8 @@
 #define TYPE_EMIN -132
 #define TYPE_EMAX 128
 
-/* Bfloatxs.pm sets emin and emax to the desired values so we  *
- * can now define SET_EMIN_EMAX and RESET_EMIN_EMAX to nothing */
-#define SET_EMIN_EMAX
-#define RESET_EMIN_EMAX
-
+/* Bfloatxs.pm sets emin and emax to the desired values so  *
+ * we no longer need SET_EMIN_EMAX and RESET_EMIN_EMAX.     */
 /*
 #define SET_EMIN_EMAX \
   mpfr_prec_t emin = mpfr_get_emin(); \
@@ -97,20 +94,6 @@ int is_bf16_zero(__bf16 * obj) {
     return ret;
 }
 
-/*
-Unusable - emin and emax need to be set prior to calling this sub.
-void _denormalize(mpfr_t * mpfr_t_obj, int inex) {
-  mpfr_prec_t emin = mpfr_get_emin();
-  mpfr_prec_t emax = mpfr_get_emax();
-
-  mpfr_set_emin(TYPE_EMIN);
-  mpfr_set_emax(TYPE_EMAX);
-  mpfr_subnormalize(*mpfr_t_obj, inex, MPFR_RNDN);
-  mpfr_set_emin(emin);
-  mpfr_set_emax(emax);
-}
-*/
-
 SV * _fromBfloat16(pTHX_ __bf16 * in) {
 
   __bf16 * f_obj;
@@ -169,7 +152,7 @@ SV * _fromPV(pTHX_ SV * in) {
   SV * obj_ref, * obj;
   mpfr_t temp;
   int inex;
-  SET_EMIN_EMAX
+  /* SET_EMIN_EMAX */
 
   mpfr_init2(temp, TYPE_PRECISION);
 
@@ -181,7 +164,7 @@ SV * _fromPV(pTHX_ SV * in) {
   inex = mpfr_strtofr(temp, SvPV_nolen(in), NULL, 0, MPFR_RNDN);
   mpfr_subnormalize(temp, inex, MPFR_RNDN);
   *f_obj = mpfr_get_bfloat16(temp, MPFR_RNDN);
-  RESET_EMIN_EMAX
+  /* RESET_EMIN_EMAX */
   mpfr_clear(temp);
 
   sv_setiv(obj, INT2PTR(IV,f_obj));
@@ -212,7 +195,7 @@ SV * _fromGMPf(pTHX_ mpf_t * in) {
   SV * obj_ref, * obj;
   mpfr_t temp;
   int inex;
-  SET_EMIN_EMAX
+  /* SET_EMIN_EMAX */
 
   mpfr_init2(temp, TYPE_PRECISION);
 
@@ -224,7 +207,7 @@ SV * _fromGMPf(pTHX_ mpf_t * in) {
   inex = mpfr_set_f(temp, *in, MPFR_RNDN);
   mpfr_subnormalize(temp, inex, MPFR_RNDN);
   *f_obj = mpfr_get_bfloat16(temp, MPFR_RNDN);
-  RESET_EMIN_EMAX
+  /* RESET_EMIN_EMAX */
   mpfr_clear(temp);
 
   sv_setiv(obj, INT2PTR(IV,f_obj));
@@ -238,7 +221,7 @@ SV * _fromGMPq(pTHX_ mpq_t * in) {
   SV * obj_ref, * obj;
   mpfr_t temp;
   int inex;
-  SET_EMIN_EMAX
+  /* SET_EMIN_EMAX */
 
   mpfr_init2(temp, TYPE_PRECISION);
 
@@ -250,7 +233,7 @@ SV * _fromGMPq(pTHX_ mpq_t * in) {
   inex = mpfr_set_q(temp, *in, MPFR_RNDN);
   mpfr_subnormalize(temp, inex, MPFR_RNDN);
   *f_obj = mpfr_get_bfloat16(temp, MPFR_RNDN);
-  RESET_EMIN_EMAX
+  /* RESET_EMIN_EMAX */
   mpfr_clear(temp);
 
   sv_setiv(obj, INT2PTR(IV,f_obj));
@@ -415,7 +398,7 @@ SV * _oload_pow(pTHX_ __bf16 * a, __bf16 * b, SV * third) {
   SV * obj_ref, * obj;
   mpfr_t a0, b0;
   int inex;
-  SET_EMIN_EMAX
+  /* SET_EMIN_EMAX */
 
   mpfr_init2(a0, TYPE_PRECISION);
   mpfr_init2(b0, TYPE_PRECISION);
@@ -434,7 +417,7 @@ SV * _oload_pow(pTHX_ __bf16 * a, __bf16 * b, SV * third) {
   mpfr_subnormalize(a0, inex, MPFR_RNDN);
 
   *f_obj = mpfr_get_bfloat16(a0, MPFR_RNDN);
-  RESET_EMIN_EMAX
+  /* RESET_EMIN_EMAX */
 
   sv_setiv(obj, INT2PTR(IV,f_obj));
   SvREADONLY_on(obj);
@@ -521,7 +504,7 @@ SV * _oload_int(pTHX_ __bf16 * a, SV * second, SV * third) {
   obj = newSVrv(obj_ref, "Math::Bfloat16");
 
   mpfr_set_bfloat16(temp, *a, MPFR_RNDN);
-  mpfr_trunc(temp, temp);
+  mpfr_trunc(temp, temp); /* No need for mpfr_subnormalize */
   *f_obj = mpfr_get_bfloat16(temp, MPFR_RNDN);
   mpfr_clear(temp);
 
@@ -534,6 +517,7 @@ SV * _oload_log(pTHX_ __bf16 * a, SV * second, SV * third) {
   __bf16 * f_obj;
   SV * obj_ref, * obj;
   mpfr_t temp;
+  int inex;
 
   mpfr_init2(temp, TYPE_PRECISION);
 
@@ -543,7 +527,8 @@ SV * _oload_log(pTHX_ __bf16 * a, SV * second, SV * third) {
   obj = newSVrv(obj_ref, "Math::Bfloat16");
 
   mpfr_set_bfloat16(temp, *a, MPFR_RNDN);
-  mpfr_log(temp, temp, MPFR_RNDN);
+  inex = mpfr_log(temp, temp, MPFR_RNDN);
+  mpfr_subnormalize(temp, inex, MPFR_RNDN);
   *f_obj = mpfr_get_bfloat16(temp, MPFR_RNDN);
   mpfr_clear(temp);
 
@@ -556,6 +541,7 @@ SV * _oload_exp(pTHX_ __bf16 * a, SV * second, SV * third) {
   __bf16 * f_obj;
   SV * obj_ref, * obj;
   mpfr_t temp;
+  int inex;
 
   mpfr_init2(temp, TYPE_PRECISION);
 
@@ -565,7 +551,8 @@ SV * _oload_exp(pTHX_ __bf16 * a, SV * second, SV * third) {
   obj = newSVrv(obj_ref, "Math::Bfloat16");
 
   mpfr_set_bfloat16(temp, *a, MPFR_RNDN);
-  mpfr_exp(temp, temp, MPFR_RNDN);
+  inex = mpfr_exp(temp, temp, MPFR_RNDN);
+  mpfr_subnormalize(temp, inex, MPFR_RNDN);
   *f_obj = mpfr_get_bfloat16(temp, MPFR_RNDN);
   mpfr_clear(temp);
 
@@ -578,6 +565,7 @@ SV * _oload_sqrt(pTHX_ __bf16 * a, SV * second, SV * third) {
   __bf16 * f_obj;
   SV * obj_ref, * obj;
   mpfr_t temp;
+  int inex;
 
   mpfr_init2(temp, TYPE_PRECISION);
 
@@ -587,7 +575,8 @@ SV * _oload_sqrt(pTHX_ __bf16 * a, SV * second, SV * third) {
   obj = newSVrv(obj_ref, "Math::Bfloat16");
 
   mpfr_set_bfloat16(temp, *a, MPFR_RNDN);
-  mpfr_sqrt(temp, temp, MPFR_RNDN);
+  inex = mpfr_sqrt(temp, temp, MPFR_RNDN);
+  mpfr_subnormalize(temp, inex, MPFR_RNDN);
   *f_obj = mpfr_get_bfloat16(temp, MPFR_RNDN);
   mpfr_clear(temp);
 
@@ -623,27 +612,27 @@ void unpack_bf16_hex(pTHX_ __bf16 * f) {
 
 void bf16_nextabove(__bf16 * a) {
   mpfr_t temp;
-  SET_EMIN_EMAX
+  /* SET_EMIN_EMAX */
   mpfr_init2(temp, TYPE_PRECISION);
 
   mpfr_set_bfloat16(temp, *a, MPFR_RNDN);
   mpfr_nextabove(temp);
+  mpfr_subnormalize(temp, -1, MPFR_RNDN);
   *a = mpfr_get_bfloat16(temp, MPFR_RNDN);
-  mpfr_subnormalize(temp, 0, MPFR_RNDN);
-  RESET_EMIN_EMAX
+  /* RESET_EMIN_EMAX */
   mpfr_clear(temp);
 }
 
 void bf16_nextbelow(__bf16 * a) {
   mpfr_t temp;
-  SET_EMIN_EMAX
+  /* SET_EMIN_EMAX */
   mpfr_init2(temp, TYPE_PRECISION);
 
   mpfr_set_bfloat16(temp, *a, MPFR_RNDN);
   mpfr_nextbelow(temp);
+  mpfr_subnormalize(temp, 1, MPFR_RNDN);
   *a = mpfr_get_bfloat16(temp, MPFR_RNDN);
-  mpfr_subnormalize(temp, 0, MPFR_RNDN);
-  RESET_EMIN_EMAX
+  /* RESET_EMIN_EMAX */
   mpfr_clear(temp);
 }
 

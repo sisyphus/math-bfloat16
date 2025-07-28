@@ -64,12 +64,14 @@ for(127 .. 133) { $max_subnormal += 2 ** -$_ }
 cmp_ok($max_subnormal, '==', '1.166e-38', "DENORM_MAX is 1.166e-38");
 
 bf16_nextabove($max_subnormal);
-cmp_ok($max_subnormal, '==', Math::Bfloat16->new(2) ** -126, "next above max subnormal is 2 ** -126");
+cmp_ok($max_subnormal, '==', Math::Bfloat16->new(2) ** -126, "next above max subnormal is 2 ** -126"); # 1.175e-38
 
 bf16_nextbelow($max_subnormal);
 cmp_ok($max_subnormal, '==', '1.166e-38', "next below 2 ** -126 is 1.166e-38");
 
-my $neg_max_subnormal = -$max_subnormal;
+my $neg_normal_min = Math::Bfloat16->new('-1.175e-38');
+bf16_nextabove($neg_normal_min);
+cmp_ok($neg_normal_min, '==', '-1.166e-38', "next above -1.175e-38 is -1.166e-38");
 
 
 

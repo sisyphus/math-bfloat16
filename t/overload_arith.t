@@ -254,6 +254,12 @@ my $interp = "$bf16_obj";
 my $testing = bf16_to_MPFR($bf16_obj);
 cmp_ok($interp, 'eq', "$testing", "interpolation examines object returned by bf16_to_MPFR()");
 
+bf16_set($bf16_obj, '1.175e-38');
+my $denorm_min = Math::Bfloat16->new(2) ** -133;
+
+cmp_ok($bf16_obj - $denorm_min, '==', '1.166e-38', 'normal_min - denorm_min == denorm_max');
+cmp_ok($denorm_min + '1.166e-38', '==', $bf16_obj, "denorm_min + denorm_max == normal_min");
+
 
 ###############
 # Error Tests #
