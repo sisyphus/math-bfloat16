@@ -311,13 +311,6 @@ SV * _oload_add(pTHX_ __bf16 * a, __bf16 * b, SV * third) {
   return obj_ref;
 }
 
-SV * _oload_add_eq(SV * a, SV * b, SV * third) {
-
-  SvREFCNT_inc(a);
-  *(INT2PTR(__bf16 *, SvIVX(SvRV(a)))) += *(INT2PTR(__bf16 *, SvIVX(SvRV(b))));
-  return a;
-}
-
 SV * _oload_sub(pTHX_ __bf16 * a, __bf16 * b, SV * third) {
 
   __bf16 * f_obj;
@@ -334,13 +327,6 @@ SV * _oload_sub(pTHX_ __bf16 * a, __bf16 * b, SV * third) {
   sv_setiv(obj, INT2PTR(IV,f_obj));
   SvREADONLY_on(obj);
   return obj_ref;
-}
-
-SV * _oload_sub_eq(SV * a, SV * b, SV * third) {
-
-  SvREFCNT_inc(a);
-  *(INT2PTR(__bf16 *, SvIVX(SvRV(a)))) -= *(INT2PTR(__bf16 *, SvIVX(SvRV(b))));
-  return a;
 }
 
 SV * _oload_mul(pTHX_ __bf16 * a, __bf16 * b, SV * third) {
@@ -360,13 +346,6 @@ SV * _oload_mul(pTHX_ __bf16 * a, __bf16 * b, SV * third) {
   return obj_ref;
 }
 
-SV * _oload_mul_eq(SV * a, SV * b, SV * third) {
-
-  SvREFCNT_inc(a);
-  *(INT2PTR(__bf16 *, SvIVX(SvRV(a)))) *= *(INT2PTR(__bf16 *, SvIVX(SvRV(b))));
-  return a;
-}
-
 SV * _oload_div(pTHX_ __bf16 * a, __bf16 * b, SV * third) {
 
   __bf16 * f_obj;
@@ -383,13 +362,6 @@ SV * _oload_div(pTHX_ __bf16 * a, __bf16 * b, SV * third) {
   sv_setiv(obj, INT2PTR(IV,f_obj));
   SvREADONLY_on(obj);
   return obj_ref;
-}
-
-SV * _oload_div_eq(SV * a, SV * b, SV * third) {
-
-  SvREFCNT_inc(a);
-  *(INT2PTR(__bf16 *, SvIVX(SvRV(a)))) /= *(INT2PTR(__bf16 *, SvIVX(SvRV(b))));
-  return a;
 }
 
 SV * _oload_pow(pTHX_ __bf16 * a, __bf16 * b, SV * third) {
@@ -610,29 +582,25 @@ void unpack_bf16_hex(pTHX_ __bf16 * f) {
   XSRETURN(2);
 }
 
-void bf16_nextabove(__bf16 * a) {
+void _bf16_nextabove(__bf16 * a) {
   mpfr_t temp;
-  /* SET_EMIN_EMAX */
   mpfr_init2(temp, TYPE_PRECISION);
 
   mpfr_set_bfloat16(temp, *a, MPFR_RNDN);
   mpfr_nextabove(temp);
-  mpfr_subnormalize(temp, -1, MPFR_RNDN);
+  /* mpfr_subnormalize(temp, -1, MPFR_RNDN); */
   *a = mpfr_get_bfloat16(temp, MPFR_RNDN);
-  /* RESET_EMIN_EMAX */
   mpfr_clear(temp);
 }
 
-void bf16_nextbelow(__bf16 * a) {
+void _bf16_nextbelow(__bf16 * a) {
   mpfr_t temp;
-  /* SET_EMIN_EMAX */
   mpfr_init2(temp, TYPE_PRECISION);
 
   mpfr_set_bfloat16(temp, *a, MPFR_RNDN);
   mpfr_nextbelow(temp);
-  mpfr_subnormalize(temp, 1, MPFR_RNDN);
+  /* mpfr_subnormalize(temp, 1, MPFR_RNDN); */
   *a = mpfr_get_bfloat16(temp, MPFR_RNDN);
-  /* RESET_EMIN_EMAX */
   mpfr_clear(temp);
 }
 
@@ -825,12 +793,6 @@ CODE:
 OUTPUT:  RETVAL
 
 SV *
-_oload_add_eq (a, b, third)
-	SV *	a
-	SV *	b
-	SV *	third
-
-SV *
 _oload_sub (a, b, third)
 	__bf16 *	a
 	__bf16 *	b
@@ -838,12 +800,6 @@ _oload_sub (a, b, third)
 CODE:
   RETVAL = _oload_sub (aTHX_ a, b, third);
 OUTPUT:  RETVAL
-
-SV *
-_oload_sub_eq (a, b, third)
-	SV *	a
-	SV *	b
-	SV *	third
 
 SV *
 _oload_mul (a, b, third)
@@ -855,12 +811,6 @@ CODE:
 OUTPUT:  RETVAL
 
 SV *
-_oload_mul_eq (a, b, third)
-	SV *	a
-	SV *	b
-	SV *	third
-
-SV *
 _oload_div (a, b, third)
 	__bf16 *	a
 	__bf16 *	b
@@ -868,12 +818,6 @@ _oload_div (a, b, third)
 CODE:
   RETVAL = _oload_div (aTHX_ a, b, third);
 OUTPUT:  RETVAL
-
-SV *
-_oload_div_eq (a, b, third)
-	SV *	a
-	SV *	b
-	SV *	third
 
 SV *
 _oload_pow (a, b, third)
@@ -1006,13 +950,13 @@ unpack_bf16_hex (f)
         return;
 
 void
-bf16_nextabove (a)
+_bf16_nextabove (a)
 	__bf16 *	a
         PREINIT:
         I32* temp;
         PPCODE:
         temp = PL_markstack_ptr++;
-        bf16_nextabove(a);
+        _bf16_nextabove(a);
         if (PL_markstack_ptr != temp) {
           /* truly void, because dXSARGS not invoked */
           PL_markstack_ptr = temp;
@@ -1022,13 +966,13 @@ bf16_nextabove (a)
         return;
 
 void
-bf16_nextbelow (a)
+_bf16_nextbelow (a)
 	__bf16 *	a
         PREINIT:
         I32* temp;
         PPCODE:
         temp = PL_markstack_ptr++;
-        bf16_nextbelow(a);
+        _bf16_nextbelow(a);
         if (PL_markstack_ptr != temp) {
           /* truly void, because dXSARGS not invoked */
           PL_markstack_ptr = temp;

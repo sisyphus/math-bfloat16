@@ -73,6 +73,39 @@ my $neg_normal_min = Math::Bfloat16->new('-1.175e-38');
 bf16_nextabove($neg_normal_min);
 cmp_ok($neg_normal_min, '==', '-1.166e-38', "next above -1.175e-38 is -1.166e-38");
 
+my $min        = Math::Bfloat16->new('9.184e-41');
+my $cumulative = Math::Bfloat16->new('9.184e-41');
 
+my @p = ($cumulative);
+for(1..127) {
+   $cumulative += $min;
+   push (@p, $cumulative);
+}
+
+my $check = Math::Bfloat16->new(0);
+
+for(0..127) {
+  bf16_nextabove($check);
+  cmp_ok($check, '==', $p[$_], "$_: as expected ($p[$_])");
+}
+
+bf16_nextbelow($check);
+cmp_ok($check, '==', '1.166e-38', "1.166e-38 as expected");
+
+bf16_nextbelow($check);
+cmp_ok($check, '==', '1.157e-38', "1.157e-38 as expected");
+
+bf16_set_zero($check, 1);
+
+for(0..127) {
+  bf16_nextbelow($check);
+  cmp_ok($check, '==', -$p[$_], "$_: as expected (-$p[$_])");
+}
+
+bf16_nextabove($check);
+cmp_ok($check, '==', '-1.166e-38', "-1.166e-38 as expected");
+
+bf16_nextabove($check);
+cmp_ok($check, '==', '-1.157e-38', "-1.157e-38 as expected");
 
 done_testing();

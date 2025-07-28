@@ -3,8 +3,9 @@ use warnings;
 package Math::Bfloat16;
 use Math::MPFR qw(:mpfr);
 
-use constant bf16_EMIN => -132;
-use constant bf16_EMAX =>  128;
+use constant bf16_EMIN     => -132;
+use constant bf16_EMAX     =>  128;
+use constant bf16_MANTBITS =>    8;
 
 
 use overload
@@ -13,12 +14,6 @@ use overload
 '*'  => \&oload_mul,
 '/'  => \&oload_div,
 '**' => \&oload_pow,
-
-'+='  => \&oload_add_eq,
-'-='  => \&oload_sub_eq,
-'*='  => \&oload_mul_eq,
-'/='  => \&oload_div_eq,
-'**=' => \&oload_pow,
 
 '=='  => \&oload_equiv,
 '!='  => \&oload_not_equiv,
@@ -38,7 +33,6 @@ use overload
 'int'  => \&_oload_int,
 '!'    => \&_oload_not,
 'bool' => \&_oload_bool,
-
 ;
 
 require Exporter;
@@ -78,6 +72,9 @@ my @tagged = qw( bf16_to_NV bf16_to_MPFR
                20 => sub {return _fromBfloat16(shift)},
                );
 
+$Math::Bfloat16::bf16_DENORM_MIN = Math::Bfloat16->new(2) ** (bf16_EMIN - 1);
+$Math::Bfloat16::bf16_NORM_MIN   = Math::Bfloat16->new(2) ** (bf16_EMIN + (bf16_MANTBITS - 2));
+
 _XS_set_emin(bf16_EMIN);
 _XS_set_emax(bf16_EMAX);
 
@@ -113,16 +110,6 @@ sub oload_add {
    die "Unrecognized 2nd argument passed to oload_add() function";
 }
 
-sub oload_add_eq {
-   my $itsa = _itsa($_[1]);
-   return _oload_add_eq(@_) if $itsa == 20;
-   if($itsa < 5) {
-     my $coderef = $Math::Bfloat16::handler{$itsa};
-     return _oload_add_eq($_[0], $coderef->($_[1]), 0);
-   }
-   die "Unrecognized 2nd argument passed to oload_add_eq() function";
-}
-
 sub oload_mul {
    my $itsa = _itsa($_[1]);
    return _oload_mul(@_) if $itsa == 20;
@@ -131,16 +118,6 @@ sub oload_mul {
      return _oload_mul($_[0], $coderef->($_[1]), 0);
    }
    die "Unrecognized 2nd argument passed to oload_mul() function";
-}
-
-sub oload_mul_eq {
-   my $itsa = _itsa($_[1]);
-   return _oload_mul_eq(@_) if $itsa == 20;
-   if($itsa < 5) {
-     my $coderef = $Math::Bfloat16::handler{$itsa};
-     return _oload_mul_eq($_[0], $coderef->($_[1]), 0);
-   }
-   die "Unrecognized 2nd argument passed to oload_mul_eq() function";
 }
 
 sub oload_sub {
@@ -153,16 +130,6 @@ sub oload_sub {
    die "Unrecognized 2nd argument passed to oload_sub() function";
 }
 
-sub oload_sub_eq {
-   my $itsa = _itsa($_[1]);
-   return _oload_sub_eq(@_) if $itsa == 20;
-   if($itsa < 5) {
-     my $coderef = $Math::Bfloat16::handler{$itsa};
-     return _oload_sub_eq($_[0], $coderef->($_[1]), 0);
-   }
-   die "Unrecognized 2nd argument passed to oload_sub_eq() function";
-}
-
 sub oload_div {
    my $itsa = _itsa($_[1]);
    return _oload_div(@_) if $itsa == 20;
@@ -173,16 +140,6 @@ sub oload_div {
    die "Unrecognized 2nd argument passed to oload_div() function";
 }
 
-sub oload_div_eq {
-   my $itsa = _itsa($_[1]);
-   return _oload_div_eq(@_) if $itsa == 20;
-   if($itsa < 5) {
-     my $coderef = $Math::Bfloat16::handler{$itsa};
-     return _oload_div_eq($_[0], $coderef->($_[1]), 0);
-   }
-   die "Unrecognized 2nd argument passed to oload_div_eq() function";
-}
-
 sub oload_pow {
    my $itsa = _itsa($_[1]);
    return _oload_pow(@_) if $itsa == 20;
@@ -191,16 +148,6 @@ sub oload_pow {
      return _oload_pow($_[0], $coderef->($_[1]), $_[2]);
    }
    die "Unrecognized 2nd argument passed to oload_pow() function";
-}
-
-sub oload_pow_eq {
-   my $itsa = _itsa($_[1]);
-   return _oload_pow_eq(@_) if $itsa == 20;
-   if($itsa < 5) {
-     my $coderef = $Math::Bfloat16::handler{$itsa};
-     return _oload_pow_eq($_[0], $coderef->($_[1]), 0);
-   }
-   die "Unrecognized 2nd argument passed to oload_pow_eq() function";
 }
 
 sub oload_abs {
@@ -277,26 +224,31 @@ sub oload_interp {
    return $ret;
 }
 
+sub bf16_nextabove {
+  if(is_bf16_zero($_[0])) {
+    bf16_set($_[0], $Math::Bfloat16::bf16_DENORM_MIN);
+  }
+  elsif($_[0] < $Math::Bfloat16::bf16_NORM_MIN && $_[0] >= -$Math::Bfloat16::bf16_NORM_MIN ) {
+    $_[0] += $Math::Bfloat16::bf16_DENORM_MIN;
+    bf16_set_zero($_[0], -1) if is_bf16_zero($_[0]);
+  }
+  else {
+    _bf16_nextabove($_[0]);
+  }
+}
+
+sub bf16_nextbelow {
+  if(is_bf16_zero($_[0])) {
+    bf16_set($_[0], -$Math::Bfloat16::bf16_DENORM_MIN);
+  }
+  elsif($_[0] <= $Math::Bfloat16::bf16_NORM_MIN && $_[0] > -$Math::Bfloat16::bf16_NORM_MIN ) {
+    $_[0] -= $Math::Bfloat16::bf16_DENORM_MIN;
+  }
+  else {
+    _bf16_nextbelow($_[0]);
+  }
+}
+
 1;
 
 __END__
-###############################
-  emin = mpfr_get_emin();
-  emax = mpfr_get_emax();
-
-  mpfr_set_emin(-1073);
-  mpfr_set_emax(1024);
-
-  inex = mpfr_strtofr(temp, SvPV_nolen(str), NULL, 0, GMP_RNDN);
-  mpfr_subnormalize(temp, inex, GMP_RNDN);
-
-  mpfr_set_emin(emin);
-  mpfr_set_emax(emax);
-
-  d = mpfr_get_d(temp, GMP_RNDN);
-##############################
-
-Notes:
-min subnormal is       2 ** -133 (= 9.184e-41). Implies we want mpfr_set_emin(-132).
-max finite power of is 2 **  127 (= 1.701e38).  Implies we want mpfr_set_emax( 128).
-precision of the mpfr_t should  be 8.

@@ -104,7 +104,13 @@
 
     $string = "$obj";
      Set $str to the value of $obj in decimal scientific
-     notation (eg 1.234e-2).
+     notation (eg 1.234e-2). If this string is passed as
+     the argument to Math::Bfloat16->new(), then the
+     returned object will hold the identical value to the
+     object from which the string was retrieved.  That is,
+     the condition:
+       (Math::Bfloat16->new("$obj") == $obj)
+     will always be true (unless $obj is NaN, of course).
 
     print $obj;
     print "$obj";
