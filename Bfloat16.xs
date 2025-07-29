@@ -18,7 +18,7 @@
 #define TYPE_EMIN -132
 #define TYPE_EMAX 128
 
-/* Bfloatxs.pm sets emin and emax to the desired values so  *
+/* Bfloat16.pm sets emin and emax to the desired values so  *
  * we no longer need SET_EMIN_EMAX and RESET_EMIN_EMAX.     */
 /*
 #define SET_EMIN_EMAX \

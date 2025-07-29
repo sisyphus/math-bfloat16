@@ -54,6 +54,7 @@ my @tagged = qw( bf16_to_NV bf16_to_MPFR
                  bf16_set
                  bf16_nextabove bf16_nextbelow
                  unpack_bf16_hex
+                 bf16_EMIN bf16_EMAX bf16_MANTBITS
                );
 
 @Math::Bfloat16::EXPORT = ();
@@ -73,7 +74,9 @@ my @tagged = qw( bf16_to_NV bf16_to_MPFR
                );
 
 $Math::Bfloat16::bf16_DENORM_MIN = Math::Bfloat16->new(2) ** (bf16_EMIN - 1);
+$Math::Bfloat16::bf16_DENORM_MAX = Math::Bfloat16->new(_get_denorm_max());
 $Math::Bfloat16::bf16_NORM_MIN   = Math::Bfloat16->new(2) ** (bf16_EMIN + (bf16_MANTBITS - 2));
+$Math::Bfloat16::bf16_NORM_MAX   = Math::Bfloat16->new(_get_norm_max());
 
 _XS_set_emin(bf16_EMIN);
 _XS_set_emax(bf16_EMAX);
@@ -247,6 +250,20 @@ sub bf16_nextbelow {
   else {
     _bf16_nextbelow($_[0]);
   }
+}
+
+sub _get_norm_max {
+  my $ret = 0;
+  for my $p(1 .. bf16_MANTBITS) { $ret += 2 ** (bf16_EMAX - $p) }
+  return $ret;
+}
+
+sub _get_denorm_max {
+  my $ret = 0;
+  my $max = -(bf16_EMIN - 1);
+  my $min = $max - (bf16_MANTBITS - 2);
+  for my $p($min .. $max) { $ret += 2 ** -$p }
+  return $ret;
 }
 
 1;

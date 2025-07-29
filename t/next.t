@@ -4,8 +4,8 @@ use Math::Bfloat16 qw(:all);
 
 use Test::More;
 
-cmp_ok(Math::Bfloat16::_XS_get_emin(), '==', Math::Bfloat16::bf16_EMIN, "emin set correctly");
-cmp_ok(Math::Bfloat16::_XS_get_emax(), '==', Math::Bfloat16::bf16_EMAX, "emin set correctly");
+cmp_ok(Math::Bfloat16::_XS_get_emin(), '==', bf16_EMIN, "emin set correctly");
+cmp_ok(Math::Bfloat16::_XS_get_emax(), '==', bf16_EMAX, "emax set correctly");
 
 my $nan = Math::Bfloat16->new();
 cmp_ok( (is_bf16_nan($nan)), '==', 1, "new obj is NaN");
@@ -28,7 +28,7 @@ cmp_ok( $pinf, '==', '3.39e38' , "next below +inf is 3.39e38");
 bf16_nextabove($pinf);
 cmp_ok( (is_bf16_inf($pinf)), '==', 1, "next above 3.39e38 is inf");
 
-my $pmin = Math::Bfloat16->new(2) ** -133;
+my $pmin = $Math::Bfloat16::bf16_DENORM_MIN;
 cmp_ok($pmin, '==', '9.184e-41', "+min is 9.184e-41");
 
 bf16_nextbelow($pmin);
@@ -36,14 +36,14 @@ cmp_ok($pmin, '==', 0, "next below +min is zero");
 cmp_ok( (is_bf16_zero($pmin)), '==', 1, "next below +min is unsigned zero");
 
 bf16_nextabove($pmin);
-cmp_ok($pmin, '==', '9.184e-41', "next above zero is 9.184e-41");
+cmp_ok($pmin, '==', $Math::Bfloat16::bf16_DENORM_MIN, "next above zero is DENORM_MIN");
 
 my $ninf = -$pinf;
 cmp_ok( (is_bf16_inf($ninf)), '==', -1, "inf is -inf");
 
 bf16_nextabove($ninf);
 cmp_ok( (is_bf16_inf($ninf)), '==', 0, "next above -inf is not inf");
-cmp_ok( $ninf, '==', '-3.39e38' , "next above inf is -3.39e38");
+cmp_ok( $ninf, '==', -$Math::Bfloat16::bf16_NORM_MAX , "next above -inf is -NORM_MAX");
 
 bf16_nextbelow($ninf);
 cmp_ok( (is_bf16_inf($ninf)), '==', -1, "next below -3.39e38 is -inf");
@@ -55,57 +55,59 @@ cmp_ok($nmin, '==', 0, "next above -min is zero");
 cmp_ok( (is_bf16_zero($nmin)), '==', -1, "next above -min is -0");
 
 bf16_nextbelow($nmin);
-cmp_ok($nmin, '==', '-9.184e-41', "next below zero is -9.184e-41");
+cmp_ok($nmin, '==', -$Math::Bfloat16::bf16_DENORM_MIN, "next below zero is -DENORM_MIN");
 
 my $zero =Math::Bfloat16->new(0);
-my $max_subnormal = Math::Bfloat16->new(0);
 
-for(127 .. 133) { $max_subnormal += 2 ** -$_ }
+#for(127 .. 133) { $max_subnormal += 2 ** -$_ }
+my $max_subnormal = $Math::Bfloat16::bf16_DENORM_MAX;
 cmp_ok($max_subnormal, '==', '1.166e-38', "DENORM_MAX is 1.166e-38");
 
 bf16_nextabove($max_subnormal);
-cmp_ok($max_subnormal, '==', Math::Bfloat16->new(2) ** -126, "next above max subnormal is 2 ** -126"); # 1.175e-38
+cmp_ok($max_subnormal, '==', $Math::Bfloat16::bf16_NORM_MIN, "next above max subnormal is NORM_MIN");
 
 bf16_nextbelow($max_subnormal);
-cmp_ok($max_subnormal, '==', '1.166e-38', "next below 2 ** -126 is 1.166e-38");
+cmp_ok($max_subnormal, '==', $Math::Bfloat16::bf16_DENORM_MAX, "next below NORM_MIN is DENORM_MAX");
 
-my $neg_normal_min = Math::Bfloat16->new('-1.175e-38');
+my $neg_normal_min = -$Math::Bfloat16::bf16_NORM_MIN;
 bf16_nextabove($neg_normal_min);
-cmp_ok($neg_normal_min, '==', '-1.166e-38', "next above -1.175e-38 is -1.166e-38");
+cmp_ok($neg_normal_min, '==', -$Math::Bfloat16::bf16_DENORM_MAX, "next above -NORM_MIN is -DENORM_MAX");
 
-my $min        = Math::Bfloat16->new('9.184e-41');
-my $cumulative = Math::Bfloat16->new('9.184e-41');
+my $min        = Math::Bfloat16->new("$Math::Bfloat16::bf16_DENORM_MIN");
+my $cumulative = Math::Bfloat16->new("$Math::Bfloat16::bf16_DENORM_MIN");
 
 my @p = ($cumulative);
-for(1..127) {
+my $n = 2 ** (bf16_MANTBITS - 1);
+$n--;
+for(1..$n) {
    $cumulative += $min;
    push (@p, $cumulative);
 }
 
 my $check = Math::Bfloat16->new(0);
 
-for(0..127) {
+for(0..$n) {
   bf16_nextabove($check);
   cmp_ok($check, '==', $p[$_], "$_: as expected ($p[$_])");
 }
 
 bf16_nextbelow($check);
-cmp_ok($check, '==', '1.166e-38', "1.166e-38 as expected");
+cmp_ok($check, '==', $Math::Bfloat16::bf16_DENORM_MAX, "DENORM_MAX as expected");
 
 bf16_nextbelow($check);
-cmp_ok($check, '==', '1.157e-38', "1.157e-38 as expected");
+cmp_ok($check, '==', $Math::Bfloat16::bf16_DENORM_MAX - $Math::Bfloat16::bf16_DENORM_MIN, "DENORM_MAX - DENORM_MIN as expected");
 
 bf16_set_zero($check, 1);
 
-for(0..127) {
+for(0..$n) {
   bf16_nextbelow($check);
   cmp_ok($check, '==', -$p[$_], "$_: as expected (-$p[$_])");
 }
 
 bf16_nextabove($check);
-cmp_ok($check, '==', '-1.166e-38', "-1.166e-38 as expected");
+cmp_ok($check, '==', -$Math::Bfloat16::bf16_DENORM_MAX, "-DENORM_MAX as expected");
 
 bf16_nextabove($check);
-cmp_ok($check, '==', '-1.157e-38', "-1.157e-38 as expected");
+cmp_ok($check, '==', -$Math::Bfloat16::bf16_DENORM_MAX + $Math::Bfloat16::bf16_DENORM_MIN, "-DENORM_MAX + DENORM_MIN as expected");
 
 done_testing();

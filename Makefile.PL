@@ -92,7 +92,7 @@ my %options = (
 
 my $prereq =  { 'Test::More' => '0.88',
                 'Test::Warn' => '0.36',
-                'Exporter'   => '5.58', # avoid test failures on pre perl-5.8.4
+                'Exporter'   => '5.58',
                 'Math::MPFR' => '4.43',
               };
 
