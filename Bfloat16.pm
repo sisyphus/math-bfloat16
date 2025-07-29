@@ -73,10 +73,10 @@ my @tagged = qw( bf16_to_NV bf16_to_MPFR
                20 => sub {return _fromBfloat16(shift)},
                );
 
-$Math::Bfloat16::bf16_DENORM_MIN = Math::Bfloat16->new(2) ** (bf16_EMIN - 1);
-$Math::Bfloat16::bf16_DENORM_MAX = Math::Bfloat16->new(_get_denorm_max());
-$Math::Bfloat16::bf16_NORM_MIN   = Math::Bfloat16->new(2) ** (bf16_EMIN + (bf16_MANTBITS - 2));
-$Math::Bfloat16::bf16_NORM_MAX   = Math::Bfloat16->new(_get_norm_max());
+$Math::Bfloat16::bf16_DENORM_MIN = Math::Bfloat16->new(2) ** (bf16_EMIN - 1);                   # 9.184e-41
+$Math::Bfloat16::bf16_DENORM_MAX = Math::Bfloat16->new(_get_denorm_max());                      # 1.166e-38
+$Math::Bfloat16::bf16_NORM_MIN   = Math::Bfloat16->new(2) ** (bf16_EMIN + (bf16_MANTBITS - 2)); # 1.175e-38
+$Math::Bfloat16::bf16_NORM_MAX   = Math::Bfloat16->new(_get_norm_max());                        # 3.39e38
 
 _XS_set_emin(bf16_EMIN);
 _XS_set_emax(bf16_EMAX);
