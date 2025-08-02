@@ -120,11 +120,11 @@
    $string = unpack_bf16_hex($obj);
     Unpack the __bf16 encoding of the value held by $obj as a string
     of hex characters.
-    For example, unpack denorm min and +Inf:
-      print unpack_bf16_hex(Math::Bfloat->new(0);          # 0000
-      print unpack_bf16_hex(Math::Bfloat->new('-0');       # 8000
-      print unpack_bf16_hex(Math::Bfloat->new(2) ** -133); # 0001
-      print unpack_bf16_hex(Math::Bfloat->new(2) ** 128);  # 7F80 (+inf)
+    For example, unpack 0, denorm min and +Inf:
+      print unpack_bf16_hex(Math::Bfloat16->new(0));         # 0000
+      print unpack_bf16_hex(Math::Bfloat16->new('-0'));      # 8000
+      print unpack_bf16_hex(Math::Bfloat16->new(2) ** -133); # 0001
+      print unpack_bf16_hex(Math::Bfloat16->new(2) ** 128);  # 7F80 (+inf)
 
 =head1 MISCELLANEOUS FUNCTIONS
 
@@ -151,6 +151,14 @@
     This is the function that the overloading of interpolation calls.
     The instructions "print $obj;" and "print bf16_to_MPFR($obj);"
     will therefore produce exactly the same output.
+
+   bf16_nextabove($obj);
+    Increments the value in $obj by the smallest possible positive,
+    non-zero amount.
+
+   bf16_nextbelow($obj);
+    Decrements the value in $obj by the smallest possible positive,
+    non-zero amount.
 
 =head1 LICENSE
 
