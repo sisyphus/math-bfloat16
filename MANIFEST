@@ -6,6 +6,7 @@ Bfloat16.pod
 Bfloat16.xs
 have_bfloat16.in
 t/inf.t
+t/mpfr_checks.t
 t/new.t
 t/next.t
 t/overload_arith.t
