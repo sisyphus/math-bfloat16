@@ -104,8 +104,12 @@ for(0..$n) {
   cmp_ok($check, '==', -$p[$_], "$_: as expected (-$p[$_])");
 }
 
+cmp_ok($check, '==', '-1.175e-38', "\$check is set to -NORM_MIN");
+
 bf16_nextabove($check);
 cmp_ok($check, '==', -$Math::Bfloat16::bf16_DENORM_MAX, "-DENORM_MAX as expected");
+
+cmp_ok($check, '==', '-1.166e-38', "\$check is set to -DENORM_MAX");
 
 bf16_nextabove($check);
 cmp_ok($check, '==', -$Math::Bfloat16::bf16_DENORM_MAX + $Math::Bfloat16::bf16_DENORM_MIN, "-DENORM_MAX + DENORM_MIN as expected");
