@@ -557,7 +557,7 @@ SV * _oload_sqrt(pTHX_ __bf16 * a, SV * second, SV * third) {
   return obj_ref;
 }
 
-void unpack_bf16_hex(pTHX_ __bf16 * f) {
+void _unpack_bf16_hex(pTHX_ __bf16 * f) {
   dXSARGS;
   int i;
   char * buff;
@@ -588,7 +588,6 @@ void _bf16_nextabove(__bf16 * a) {
 
   mpfr_set_bfloat16(temp, *a, MPFR_RNDN);
   mpfr_nextabove(temp);
-  /* mpfr_subnormalize(temp, -1, MPFR_RNDN); */
   *a = mpfr_get_bfloat16(temp, MPFR_RNDN);
   mpfr_clear(temp);
 }
@@ -599,7 +598,6 @@ void _bf16_nextbelow(__bf16 * a) {
 
   mpfr_set_bfloat16(temp, *a, MPFR_RNDN);
   mpfr_nextbelow(temp);
-  /* mpfr_subnormalize(temp, 1, MPFR_RNDN); */
   *a = mpfr_get_bfloat16(temp, MPFR_RNDN);
   mpfr_clear(temp);
 }
@@ -934,13 +932,13 @@ CODE:
 OUTPUT:  RETVAL
 
 void
-unpack_bf16_hex (f)
+_unpack_bf16_hex (f)
 	__bf16 *	f
         PREINIT:
         I32* temp;
         PPCODE:
         temp = PL_markstack_ptr++;
-        unpack_bf16_hex(aTHX_ f);
+        _unpack_bf16_hex(aTHX_ f);
         if (PL_markstack_ptr != temp) {
           /* truly void, because dXSARGS not invoked */
           PL_markstack_ptr = temp;

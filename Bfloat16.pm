@@ -245,11 +245,16 @@ sub bf16_nextbelow {
     bf16_set($_[0], -$Math::Bfloat16::bf16_DENORM_MIN);
   }
   elsif($_[0] <= $Math::Bfloat16::bf16_NORM_MIN && $_[0] > -$Math::Bfloat16::bf16_NORM_MIN ) {
-    $_[0] -= $Math::Bfloat16::bf16_DENORM_MIN;
+   $_[0] -= $Math::Bfloat16::bf16_DENORM_MIN;
   }
   else {
     _bf16_nextbelow($_[0]);
   }
+}
+
+sub unpack_bf16_hex {
+  my @ret = _unpack_bf16_hex($_[0]);
+  return join('', @ret);
 }
 
 sub _get_norm_max {
