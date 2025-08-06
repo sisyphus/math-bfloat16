@@ -5,6 +5,7 @@ Bfloat16.pm
 Bfloat16.pod
 Bfloat16.xs
 have_bfloat16.in
+t/basic.t
 t/inf.t
 t/mpfr_checks.t
 t/new.t
