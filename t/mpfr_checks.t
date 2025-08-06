@@ -57,6 +57,25 @@ for my $v(@p) {
   cmp_ok($bf16_rop, '==', sqrt($bf16_1), "sqrt($v): Math::MPFR & Math::Bfloat16 concur");
 }
 
+my $mpfr1 = Math::MPFR->new();
+my $mpfr2 = Math::MPFR->new();
+my $flt_rop = Math::Bfloat16->new();
+
+for my $v1(@p) {
+  my $flt_1 = Math::Bfloat16->new($v1);
+  Math::MPFR::Rmpfr_set_BFLOAT16($mpfr1, $flt_1, 0);
+  for my $v2(@p) {
+    my $flt_2 = Math::Bfloat16->new($v2);
+    Math::MPFR::Rmpfr_set_BFLOAT16($mpfr2, $flt_2, 0);
+    SET_EMIN_EMAX();
+    my $inex = Math::MPFR::Rmpfr_fmod($mpfr_rop, $mpfr1, $mpfr2, 0);
+    Math::MPFR::Rmpfr_subnormalize($mpfr_rop, $inex, 0);
+    RESET_EMIN_EMAX();
+    Math::MPFR::Rmpfr_get_BFLOAT16($flt_rop, $mpfr_rop, 0);
+    cmp_ok($flt_rop, '==', $flt_1 % $flt_2, "fmod($v1, $v2): Math::MPFR & Math::Bfloat16 concur");
+  }
+}
+
 for my $v(@p) {
   my $bf16_1 = Math::Bfloat16->new($v);
   Rmpfr_set_BFLOAT16($mpfr_rop, $bf16_1, MPFR_RNDN);

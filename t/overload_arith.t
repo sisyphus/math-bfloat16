@@ -142,6 +142,25 @@ for (my $i = 0; $i < $index; $i++) {
   }
 }
 
+my $fmod1 = Math::Bfloat16->new('2.6');
+my $fmod2 = Math::Bfloat16->new('1.2');
+
+cmp_ok($fmod1 % $fmod2, '==', '1.875e-1', "2.6 % 1.2 == 1.875e-1");
+cmp_ok(-$fmod1 % $fmod2, '==', '-1.875e-1', "-2.6 % 1.2 == -1.875e-1");
+cmp_ok($fmod1 % -$fmod2, '==', '1.875e-1', "2.6 % -1.2 == 1.875e-1");
+cmp_ok(-$fmod1 % -$fmod2, '==', '-1.875e-1', "-2.6 % -1.2 == -1.875e-1");
+
+cmp_ok($fmod2 % $fmod1, '==', '1.203', "1.2 % 1.6 == 1.203");
+cmp_ok(-$fmod2 % $fmod1, '==', '-1.203', "-1.2 % 1.6 == -1.203");
+cmp_ok($fmod2 % -$fmod1, '==', '1.203', "1.2 % -1.6 == 1.203");
+cmp_ok(-$fmod2 % -$fmod1, '==', '-1.203', "-1.2 % -1.6 == -1.203");
+
+$fmod2 %= $fmod1;
+cmp_ok($fmod2, '==', '1.203', "value doesn't change under %= operation");
+
+$fmod1 %= $fmod2;
+cmp_ok($fmod1, '==', '1.875e-1', "value changes to 1.875e-1 under %= operation");
+
 ################################################
 ################################################
 
@@ -186,7 +205,7 @@ my $log = log(Math::Bfloat16->new(10));
 cmp_ok($log, '==', Math::Bfloat16->new('2.297'), "log(10) == 2.297 (MPFR)");
 cmp_ok($log, '==', '2.297', "log(10) == '2.297'");
 
-my $exp = exp(Math::Bfloat16->new('2.297'));
+my $exp = exp(Math::Bfloat16->new('2.3027'));
 cmp_ok($exp, '==', Math::Bfloat16->new('9.938'), "exp('2.297') == 9.938 (MPFR)");
 cmp_ok($exp, '==', '9.938', "exp('2.297') == '9.938'");
 
