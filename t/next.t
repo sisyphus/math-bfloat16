@@ -4,9 +4,6 @@ use Math::Bfloat16 qw(:all);
 
 use Test::More;
 
-cmp_ok(Math::Bfloat16::_XS_get_emin(), '==', bf16_EMIN, "emin set correctly");
-cmp_ok(Math::Bfloat16::_XS_get_emax(), '==', bf16_EMAX, "emax set correctly");
-
 my $nan = Math::Bfloat16->new();
 cmp_ok( (is_bf16_nan($nan)), '==', 1, "new obj is NaN");
 

@@ -79,8 +79,8 @@ $Math::Bfloat16::bf16_DENORM_MAX = Math::Bfloat16->new(_get_denorm_max());      
 $Math::Bfloat16::bf16_NORM_MIN   = Math::Bfloat16->new(2) ** (bf16_EMIN + (bf16_MANTBITS - 2)); # 1.175e-38
 $Math::Bfloat16::bf16_NORM_MAX   = Math::Bfloat16->new(_get_norm_max());                        # 3.39e38
 
-_XS_set_emin(bf16_EMIN);
-_XS_set_emax(bf16_EMAX);
+#_XS_set_emin(bf16_EMIN);
+#_XS_set_emax(bf16_EMAX);
 
 sub new {
    shift if (@_ > 0 && !ref($_[0]) && _itsa($_[0]) == 4 && $_[0] eq "Math::Bfloat16");
@@ -242,6 +242,9 @@ sub bf16_nextabove {
   if(is_bf16_zero($_[0])) {
     bf16_set($_[0], $Math::Bfloat16::bf16_DENORM_MIN);
   }
+  elsif(is_bf16_inf($_[0]) == -1) {
+    bf16_set($_[0], -$Math::Bfloat16::bf16_NORM_MAX);
+  }
   elsif($_[0] < $Math::Bfloat16::bf16_NORM_MIN && $_[0] >= -$Math::Bfloat16::bf16_NORM_MIN ) {
     $_[0] += $Math::Bfloat16::bf16_DENORM_MIN;
     bf16_set_zero($_[0], -1) if is_bf16_zero($_[0]);
@@ -254,6 +257,9 @@ sub bf16_nextabove {
 sub bf16_nextbelow {
   if(is_bf16_zero($_[0])) {
     bf16_set($_[0], -$Math::Bfloat16::bf16_DENORM_MIN);
+  }
+  elsif(is_bf16_inf($_[0]) == 1) {
+    bf16_set($_[0], $Math::Bfloat16::bf16_NORM_MAX);
   }
   elsif($_[0] <= $Math::Bfloat16::bf16_NORM_MIN && $_[0] > -$Math::Bfloat16::bf16_NORM_MIN ) {
    $_[0] -= $Math::Bfloat16::bf16_DENORM_MIN;
