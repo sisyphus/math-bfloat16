@@ -13,5 +13,6 @@ t/next.t
 t/overload_arith.t
 t/overload_cmp.t
 t/subnormal.t
+t/unpack.t
 README
 typemap

@@ -70,6 +70,8 @@ unless($build_opt) {
   exit 0;
 }
 
+my $defines = $Config::Config{byteorder} =~ /^1234/ ? " -DWE_HAVE_LENDIAN" : " -DWE_HAVE_BENDIAN";
+
 my %options = (
   NAME         => 'Math::Bfloat16',
   AUTHOR       => 'Sisyphus (sisyphus at (@) cpan dot (.) org)',
@@ -77,6 +79,7 @@ my %options = (
   LICENSE      => 'perl',
   VERSION_FROM => 'Bfloat16.pm',
   LIBS         =>  ['-lmpfr -lgmp -lquadmath'],
+  DEFINE       =>  $defines,
   clean        => { FILES => '*.exe *.txt' },
   META_MERGE   => {
     'meta-spec'  => { version => 2 },
