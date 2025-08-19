@@ -183,6 +183,25 @@ my $mpfr_anom2 = Math::MPFR::subnormalize_bfloat16($s);
 cmp_ok(Math::MPFR::unpack_bfloat16($mpfr_anom2, $round), 'eq', '0001', "Math::MPFR::subnormalize_bfloat16() ok");
 cmp_ok($anom1, '==', Math::Bfloat16->new($mpfr_anom2), "double-checked: values are equivalent");
 
+Rmpfr_set_default_prec($Math::MPFR::NV_properties{bits});
+
+for my $man(1 ..15 ) {
+  for my $exp(26 .. 41) {
+    my $s = "${man}e-${exp}";
+    my $bf16_1 = Math::Bfloat16->new($s);
+    my $mpfr_1 = Math::MPFR::subnormalize_bfloat16($s);
+    my $mpfr_2 = Math::MPFR::subnormalize_bfloat16(Math::MPFR->new($s));
+    cmp_ok($bf16_1, '==', "$mpfr_1", "$s (strings) agreement");
+    cmp_ok($bf16_1, '==', "$mpfr_2", "$s (strings & mpfr) agreement");
+    my $nv = $s + 0;
+    my $bf16_2 = Math::Bfloat16->new($nv);
+    my $mpfr_3 = Math::MPFR::subnormalize_bfloat16($nv);
+    my $mpfr_4 = Math::MPFR::subnormalize_bfloat16(Math::MPFR->new($nv));
+    cmp_ok($bf16_2, '==', "$mpfr_3", "$s (NVs) agreement");
+    cmp_ok($bf16_2, '==', "$mpfr_4", "$s (NVs & mpfr) agreement");
+  }
+}
+
 done_testing();
 
 sub SET_EMIN_EMAX {
