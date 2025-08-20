@@ -233,6 +233,120 @@ for my $c(@corners) {
   cmp_ok("$bf16", 'eq', "$mpfr", "$c: new & subnormalize_bfloat16 agree");
 }
 
+@corners = ('0b0.11111111p+128',       '-0b0.11111111p+128', 3.3895313892515355e38, -3.3895313892515355e38,
+           '0b0.11111111011111p+128', '-0b0.11111111011111p+128', 3.3959698373561187e38, -3.3959698373561187e38,
+           Math::MPFR->new(3.3895313892515355e38), Math::MPFR->new(-3.3895313892515355e38),
+           Math::MPFR->new(3.3959698373561187e38), Math::MPFR->new(-3.3959698373561187e38), );
+
+if($have_gmpf) { push @corners, Math::GMPf->new(3.3895313892515355e38), Math::GMPf->new(-3.3895313892515355e38),
+                Math::GMPf->new(3.3959698373561187e38), Math::GMPf->new(-3.3959698373561187e38) }
+
+if($have_gmpq) { push @corners, Math::GMPq->new(3.3895313892515355e38), Math::GMPq->new(-3.3895313892515355e38),
+                Math::GMPq->new(3.3959698373561187e38), Math::GMPq->new(-3.3959698373561187e38) }
+
+for my $s(@corners) {
+  my $bf16 = Math::Bfloat16->new($s);
+  my $mpfr = subnormalize_bfloat16($s);
+  cmp_ok("$bf16", 'eq', "$mpfr", "$s: subnormalize & new agree");
+  if($bf16 > 0) {
+    cmp_ok($bf16, '==', $Math::Bfloat16::bf16_NORM_MAX, "$s is +NORM_MAX");
+  }
+  else {
+    cmp_ok($bf16, '==', -$Math::Bfloat16::bf16_NORM_MAX, "$s is -NORM_MAX");
+  }
+}
+
+@corners = ('0b0.01111111111111p+128', '-0b0.01111111111111p+128', 1.7012041427303509e38, -1.7012041427303509e38,
+           Math::MPFR->new(1.7012041427303509e38), Math::MPFR->new(-1.7012041427303509e38));
+
+if($have_gmpf) { push @corners, Math::GMPf->new(1.7012041427303509e38), Math::GMPf->new(-1.7012041427303509e38) }
+if($have_gmpq) { push @corners, Math::GMPq->new(1.7012041427303509e38), Math::GMPq->new(-1.7012041427303509e38) }
+
+
+for my $s (@corners) {
+  my $bf16 = Math::Bfloat16->new($s);
+  my $mpfr = subnormalize_bfloat16($s);
+  cmp_ok("$bf16", 'eq', "$mpfr", "$s: subnormalize & new agree");
+  if($bf16 > 0) {
+    cmp_ok("$bf16", 'eq', '1.701e38', "$s is 1.701e38");
+  }
+  else {
+    cmp_ok("$bf16", 'eq', '-1.701e38', "$s is -1.701e38");
+  }
+}
+
+@corners = ('0b0.111111111p+128',  '-0b0.111111111p+128', 3.3961775292304601e38, -3.3961775292304601e38,
+            Math::MPFR->new(3.3961775292304601e38), Math::MPFR->new(-3.3961775292304601e38));
+
+if($have_gmpf) { push @corners, Math::GMPf->new(3.3961775292304601e38), Math::GMPf->new(-3.3961775292304601e38) }
+if($have_gmpq) { push @corners, Math::GMPq->new(3.3961775292304601e38), Math::GMPq->new(-3.3961775292304601e38) }
+
+
+for my $s (@corners) {
+  my $bf16 = Math::Bfloat16->new($s);
+  my $mpfr = subnormalize_bfloat16($s);
+  cmp_ok("$bf16", 'eq', "$mpfr", "$s: subnormalize & new agree");
+  if($bf16 > 0) {
+    cmp_ok(is_bf16_inf($bf16), '==', 1, "$s is +Inf");
+  }
+  else {
+    cmp_ok(is_bf16_inf($bf16), '==', -1, "$s is -INF");
+  }
+}
+
+@corners = ('0b0.1p+129', '0b0.1111111111111111p+129', '0b0.1p+130', '0b0.1111111111111111p+130',
+            '0b0.1p+250', '0b0.1111111111111111p+250',
+            3.4028236692093846e38, 6.8055434924815986e38, 6.8056473384187693e38, 1.3611086984963197e39,
+            9.0462569716653278e74, 1.8092237873476784e75,
+            Math::MPFR->new(3.4028236692093846e38), Math::MPFR->new(6.8055434924815986e38),
+            Math::MPFR->new(6.8056473384187693e38), Math::MPFR->new(1.3611086984963197e39),
+            Math::MPFR->new(9.0462569716653278e74), Math::MPFR->new(1.8092237873476784e75)
+           );
+
+if($have_gmpf) { push @corners, Math::GMPf->new(3.4028236692093846e38), Math::GMPf->new(6.8055434924815986e38),
+                                Math::GMPf->new(6.8056473384187693e38), Math::GMPf->new(1.3611086984963197e39),
+                                Math::GMPf->new(9.0462569716653278e74), Math::GMPf->new(1.8092237873476784e75) }
+
+if($have_gmpq) { push @corners, Math::GMPq->new(3.4028236692093846e38), Math::GMPq->new(6.8055434924815986e38),
+                                Math::GMPq->new(6.8056473384187693e38), Math::GMPq->new(1.3611086984963197e39),
+                                Math::GMPq->new(9.0462569716653278e74), Math::GMPq->new(1.8092237873476784e75) }
+
+for my $s (@corners) {
+  my $bf16 = Math::Bfloat16->new($s);
+  my $mpfr = subnormalize_bfloat16($s);
+  cmp_ok(is_bf16_inf($bf16), '==', 1, "$s assigns to Math::Bfloat16 as +Inf");
+  cmp_ok(Rmpfr_inf_p($mpfr), '==', 1, "subnormalize_bfloat16 returns $s as Inf");
+  cmp_ok(Rmpfr_signbit($mpfr), '==', 0, "$s is +Inf");
+}
+
+#################################################
+#################################################
+
+@corners = ('-0b0.1p+129', '-0b0.1111111111111111p+129', '-0b0.1p+130', '-0b0.1111111111111111p+130',
+            '-0b0.1p+250', '-0b0.1111111111111111p+250',
+            -3.4028236692093846e38, -6.8055434924815986e38, -6.8056473384187693e38, -1.3611086984963197e39,
+            -9.0462569716653278e74, -1.8092237873476784e75,
+            Math::MPFR->new(-3.4028236692093846e38), Math::MPFR->new(-6.8055434924815986e38),
+            Math::MPFR->new(-6.8056473384187693e38), Math::MPFR->new(-1.3611086984963197e39),
+            Math::MPFR->new(-9.0462569716653278e74), Math::MPFR->new(-1.8092237873476784e75)
+           );
+
+if($have_gmpf) { push @corners, Math::GMPf->new(-3.4028236692093846e38), Math::GMPf->new(-6.8055434924815986e38),
+                                Math::GMPf->new(-6.8056473384187693e38), Math::GMPf->new(-1.3611086984963197e39),
+                                Math::GMPf->new(-9.0462569716653278e74), Math::GMPf->new(-1.8092237873476784e75) }
+
+if($have_gmpq) { push @corners, Math::GMPq->new(-3.4028236692093846e38), Math::GMPq->new(-6.8055434924815986e38),
+                                Math::GMPq->new(-6.8056473384187693e38), Math::GMPq->new(-1.3611086984963197e39),
+                                Math::GMPq->new(-9.0462569716653278e74), Math::GMPq->new(-1.8092237873476784e75) }
+
+for my $s (@corners) {
+  my $bf16 = Math::Bfloat16->new($s);
+  my $mpfr = subnormalize_bfloat16($s);
+  cmp_ok(is_bf16_inf($bf16), '==', -1, "$s assigns to Math::Bfloat16 as -Inf");
+  cmp_ok(Rmpfr_inf_p($mpfr), '==', 1, "subnormalize_bfloat16 returns $s as Inf");
+  cmp_ok(Rmpfr_signbit($mpfr), '==', 1, "$s is -Inf");
+}
+
 done_testing();
 
 sub SET_EMIN_EMAX {
