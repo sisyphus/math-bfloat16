@@ -202,6 +202,37 @@ for my $man(1 ..15 ) {
   }
 }
 
+my($have_gmpf, $have_gmpq) = (0, 0);
+
+eval { require Math::GMPf;};
+if($@) { warn "skipping Math::GMPf tests\n" }
+else { $have_gmpf = 1 }
+
+eval { require Math::GMPq;};
+if($@) { warn "skipping Math::GMPq tests\n" }
+else { $have_gmpq = 1 }
+
+my @corners = ('0b0.1000000000000001p-133', '-0b0.1000000000000001p-133', '4.5919149377459931e-41',
+               '-4.5919149377459931e-41', 4.5919149377459931e-41, -4.5919149377459931e-41,
+               Math::MPFR->new('0b0.1000000000000001p-133'), Math::MPFR->new('-0b0.1000000000000001p-133'),
+               Math::MPFR->new(4.5919149377459931e-41), Math::MPFR->new(-4.5919149377459931e-41)
+              );
+
+if($have_gmpf) { push @corners, Math::GMPf->new(4.5919149377459931e-41), Math::GMPf->new(-4.5919149377459931e-41) }
+if($have_gmpq) { push @corners, Math::GMPq->new(4.5919149377459931e-41), Math::GMPq->new(-4.5919149377459931e-41) }
+
+for my $c(@corners) {
+  my $bf16 = Math::Bfloat16->new($c);
+  my $mpfr = Math::MPFR::subnormalize_bfloat16($c);
+  if($bf16 > 0) {
+    cmp_ok($bf16, '==', $Math::Bfloat16::bf16_DENORM_MIN, "Value is +DENORM_MIN");
+  }
+  else {
+    cmp_ok($bf16, '==', -$Math::Bfloat16::bf16_DENORM_MIN, "Value is -DENORM_MIN");
+  }
+  cmp_ok("$bf16", 'eq', "$mpfr", "$c: new & subnormalize_bfloat16 agree");
+}
+
 done_testing();
 
 sub SET_EMIN_EMAX {
