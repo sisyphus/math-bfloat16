@@ -189,12 +189,19 @@ for my $man(1 ..15 ) {
   for my $exp(26 .. 41) {
     my $s = "${man}e-${exp}";
     my $bf16_1 = Math::Bfloat16->new($s);
+    my $get = sprintf("%.4g", Rmpfr_get_bfloat16(Math::MPFR->new($s), MPFR_RNDN));
+    $get =~ s/\+//g;
+    cmp_ok(lc("$bf16_1"), 'eq', lc($get), "$s: agreement with Rmpfr_get_bfloat16");
     my $mpfr_1 = Math::MPFR::subnormalize_bfloat16($s);
     my $mpfr_2 = Math::MPFR::subnormalize_bfloat16(Math::MPFR->new($s));
     cmp_ok($bf16_1, '==', "$mpfr_1", "$s (strings) agreement");
     cmp_ok($bf16_1, '==', "$mpfr_2", "$s (strings & mpfr) agreement");
     my $nv = $s + 0;
     my $bf16_2 = Math::Bfloat16->new($nv);
+    cmp_ok($bf16_1, '==', $bf16_2, "$nv: both Math::Bfloat16 objects are equivalent");
+    $get = sprintf("%.4g", Rmpfr_get_bfloat16(Math::MPFR->new($nv), MPFR_RNDN));
+    $get =~ s/\+//g;
+    cmp_ok(lc("$bf16_1"), 'eq', lc($get), "$s: agreement with Rmpfr_get_bfloat16");
     my $mpfr_3 = Math::MPFR::subnormalize_bfloat16($nv);
     my $mpfr_4 = Math::MPFR::subnormalize_bfloat16(Math::MPFR->new($nv));
     cmp_ok($bf16_2, '==', "$mpfr_3", "$s (NVs) agreement");
@@ -224,6 +231,9 @@ if($have_gmpq) { push @corners, Math::GMPq->new(4.5919149377459931e-41), Math::G
 for my $c(@corners) {
   my $bf16 = Math::Bfloat16->new($c);
   my $mpfr = Math::MPFR::subnormalize_bfloat16($c);
+  my $get = sprintf("%.4g", Rmpfr_get_bfloat16(Math::MPFR->new($c), MPFR_RNDN));
+  $get =~ s/\+//g;
+  cmp_ok(lc("$bf16"), 'eq', lc($get), "$c: agreement with Rmpfr_get_bfloat16");
   if($bf16 > 0) {
     cmp_ok($bf16, '==', $Math::Bfloat16::bf16_DENORM_MIN, "Value is +DENORM_MIN");
   }
@@ -247,6 +257,9 @@ if($have_gmpq) { push @corners, Math::GMPq->new(3.3895313892515355e38), Math::GM
 for my $s(@corners) {
   my $bf16 = Math::Bfloat16->new($s);
   my $mpfr = subnormalize_bfloat16($s);
+  my $get = sprintf("%.4g", Rmpfr_get_bfloat16(Math::MPFR->new($s), MPFR_RNDN));
+  $get =~ s/\+//g;
+  cmp_ok(lc("$bf16"), 'eq', lc($get), "$s: agreement with Rmpfr_get_bfloat16");
   cmp_ok("$bf16", 'eq', "$mpfr", "$s: subnormalize & new agree");
   if($bf16 > 0) {
     cmp_ok($bf16, '==', $Math::Bfloat16::bf16_NORM_MAX, "$s is +NORM_MAX");
@@ -266,6 +279,9 @@ if($have_gmpq) { push @corners, Math::GMPq->new(1.7012041427303509e38), Math::GM
 for my $s (@corners) {
   my $bf16 = Math::Bfloat16->new($s);
   my $mpfr = subnormalize_bfloat16($s);
+  my $get = sprintf("%.4g", Rmpfr_get_bfloat16(Math::MPFR->new($s), MPFR_RNDN));
+  $get =~ s/\+//g;
+  cmp_ok("$bf16", 'eq', $get, "$s: agreement with Rmpfr_get_bfloat16");
   cmp_ok("$bf16", 'eq', "$mpfr", "$s: subnormalize & new agree");
   if($bf16 > 0) {
     cmp_ok("$bf16", 'eq', '1.701e38', "$s is 1.701e38");
@@ -285,6 +301,9 @@ if($have_gmpq) { push @corners, Math::GMPq->new(3.3961775292304601e38), Math::GM
 for my $s (@corners) {
   my $bf16 = Math::Bfloat16->new($s);
   my $mpfr = subnormalize_bfloat16($s);
+  my $get = sprintf("%.4g", Rmpfr_get_bfloat16(Math::MPFR->new($s), MPFR_RNDN));
+  $get =~ s/\+//g;
+  cmp_ok(lc("$bf16"), 'eq', lc($get), "$s: agreement with Rmpfr_get_bfloat16");
   cmp_ok("$bf16", 'eq', "$mpfr", "$s: subnormalize & new agree");
   if($bf16 > 0) {
     cmp_ok(is_bf16_inf($bf16), '==', 1, "$s is +Inf");
@@ -314,6 +333,9 @@ if($have_gmpq) { push @corners, Math::GMPq->new(3.4028236692093846e38), Math::GM
 for my $s (@corners) {
   my $bf16 = Math::Bfloat16->new($s);
   my $mpfr = subnormalize_bfloat16($s);
+  my $get = sprintf("%.4g", Rmpfr_get_bfloat16(Math::MPFR->new($s), MPFR_RNDN));
+  $get =~ s/\+//g;
+  cmp_ok(lc("$bf16"), 'eq', lc($get), "$s: agreement with Rmpfr_get_bfloat16");
   cmp_ok(is_bf16_inf($bf16), '==', 1, "$s assigns to Math::Bfloat16 as +Inf");
   cmp_ok(Rmpfr_inf_p($mpfr), '==', 1, "subnormalize_bfloat16 returns $s as Inf");
   cmp_ok(Rmpfr_signbit($mpfr), '==', 0, "$s is +Inf");
@@ -341,6 +363,9 @@ if($have_gmpq) { push @corners, Math::GMPq->new(-3.4028236692093846e38), Math::G
 
 for my $s (@corners) {
   my $bf16 = Math::Bfloat16->new($s);
+  my $get = sprintf("%.4g", Rmpfr_get_bfloat16(Math::MPFR->new($s), MPFR_RNDN));
+  $get =~ s/\+//g;
+  cmp_ok(lc("$bf16"), 'eq', lc($get), "$s: agreement with Rmpfr_get_bfloat16");
   my $mpfr = subnormalize_bfloat16($s);
   cmp_ok(is_bf16_inf($bf16), '==', -1, "$s assigns to Math::Bfloat16 as -Inf");
   cmp_ok(Rmpfr_inf_p($mpfr), '==', 1, "subnormalize_bfloat16 returns $s as Inf");
