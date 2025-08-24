@@ -24,6 +24,7 @@ Rmpfr_set_default_prec(bf16_MANTBITS);
 
 my $bf16_rop = Math::Bfloat16->new();
 my $mpfr_rop = Math::MPFR->new();
+my @subn_args = (-132, 128, 8);
 
 my @p = (  (2 ** (bf16_EMIN -1)),
            (2 ** bf16_EMIN) + (2 ** (bf16_EMIN + 2)),
@@ -169,7 +170,7 @@ for my $p(@powers) {
   }
 }
 
-# Test that Math::MPFR::subnormalize_bfloat16
+# Test that Math::MPFR::subnormalize_generic
 # fixes a known double-rounding anomaly.
 my $s = '13.75e-41';
 my $round = 0; # MPFR_RNDN
@@ -179,8 +180,8 @@ my $anom1 = Math::Bfloat16->new($s);
 cmp_ok(unpack_bf16_hex($anom1), 'eq', '0001', "direct assignment results in '0001'");
 cmp_ok(Math::MPFR::unpack_bfloat16($mpfr_anom1, $round), 'eq', '0002', "indirect assignment results in '0002'");
 cmp_ok($anom1, '!=', Math::Bfloat16->new($mpfr_anom1), "double-checked: values are different");
-my $mpfr_anom2 = Math::MPFR::subnormalize_bfloat16($s);
-cmp_ok(Math::MPFR::unpack_bfloat16($mpfr_anom2, $round), 'eq', '0001', "Math::MPFR::subnormalize_bfloat16() ok");
+my $mpfr_anom2 = Math::MPFR::subnormalize_generic($s, @subn_args);
+cmp_ok(Math::MPFR::unpack_bfloat16($mpfr_anom2, $round), 'eq', '0001', "Math::MPFR::subnormalize_generic() ok");
 cmp_ok($anom1, '==', Math::Bfloat16->new($mpfr_anom2), "double-checked: values are equivalent");
 
 Rmpfr_set_default_prec($Math::MPFR::NV_properties{bits});
@@ -192,8 +193,8 @@ for my $man(1 ..15 ) {
     my $get = sprintf("%.4g", Rmpfr_get_bfloat16(Math::MPFR->new($s), MPFR_RNDN));
     $get =~ s/\+//g;
     cmp_ok(lc("$bf16_1"), 'eq', lc($get), "$s: agreement with Rmpfr_get_bfloat16");
-    my $mpfr_1 = Math::MPFR::subnormalize_bfloat16($s);
-    my $mpfr_2 = Math::MPFR::subnormalize_bfloat16(Math::MPFR->new($s));
+    my $mpfr_1 = Math::MPFR::subnormalize_generic($s, @subn_args);
+    my $mpfr_2 = Math::MPFR::subnormalize_generic(Math::MPFR->new($s), @subn_args);
     cmp_ok($bf16_1, '==', "$mpfr_1", "$s (strings) agreement");
     cmp_ok($bf16_1, '==', "$mpfr_2", "$s (strings & mpfr) agreement");
     my $nv = $s + 0;
@@ -202,8 +203,8 @@ for my $man(1 ..15 ) {
     $get = sprintf("%.4g", Rmpfr_get_bfloat16(Math::MPFR->new($nv), MPFR_RNDN));
     $get =~ s/\+//g;
     cmp_ok(lc("$bf16_1"), 'eq', lc($get), "$s: agreement with Rmpfr_get_bfloat16");
-    my $mpfr_3 = Math::MPFR::subnormalize_bfloat16($nv);
-    my $mpfr_4 = Math::MPFR::subnormalize_bfloat16(Math::MPFR->new($nv));
+    my $mpfr_3 = Math::MPFR::subnormalize_generic($nv, @subn_args);
+    my $mpfr_4 = Math::MPFR::subnormalize_generic(Math::MPFR->new($nv), @subn_args);
     cmp_ok($bf16_2, '==', "$mpfr_3", "$s (NVs) agreement");
     cmp_ok($bf16_2, '==', "$mpfr_4", "$s (NVs & mpfr) agreement");
   }
@@ -233,7 +234,7 @@ if($have_gmpq) { push @corners, Math::GMPq->new(4.5919149377459931e-41), Math::G
 # 4.5917748078995606e-41
 for my $c(@corners) {
   my $bf16 = Math::Bfloat16->new($c);
-  my $mpfr = Math::MPFR::subnormalize_bfloat16($c);
+  my $mpfr = Math::MPFR::subnormalize_generic($c, @subn_args);
   my $get = sprintf("%.4g", Rmpfr_get_bfloat16(Math::MPFR->new($c), MPFR_RNDN));
   $get =~ s/\+//g;
   cmp_ok(lc("$bf16"), 'eq', lc($get), "$c: agreement with Rmpfr_get_bfloat16");
@@ -245,7 +246,7 @@ for my $c(@corners) {
       cmp_ok($bf16, '==', -$Math::Bfloat16::bf16_DENORM_MIN, "Value is -DENORM_MIN");
     }
   }
-  cmp_ok("$bf16", 'eq', "$mpfr", "$c: new & subnormalize_bfloat16 agree");
+  cmp_ok("$bf16", 'eq', "$mpfr", "$c: new & subnormalize_generic agree");
 }
 
 @corners = ('0b0.11111111p+128',       '-0b0.11111111p+128', 3.3895313892515355e38, -3.3895313892515355e38,
@@ -261,7 +262,7 @@ if($have_gmpq) { push @corners, Math::GMPq->new(3.3895313892515355e38), Math::GM
 
 for my $s(@corners) {
   my $bf16 = Math::Bfloat16->new($s);
-  my $mpfr = subnormalize_bfloat16($s);
+  my $mpfr = subnormalize_generic($s, @subn_args);
   my $get = sprintf("%.4g", Rmpfr_get_bfloat16(Math::MPFR->new($s), MPFR_RNDN));
   $get =~ s/\+//g;
   cmp_ok(lc("$bf16"), 'eq', lc($get), "$s: agreement with Rmpfr_get_bfloat16");
@@ -283,7 +284,7 @@ if($have_gmpq) { push @corners, Math::GMPq->new(1.7012041427303509e38), Math::GM
 
 for my $s (@corners) {
   my $bf16 = Math::Bfloat16->new($s);
-  my $mpfr = subnormalize_bfloat16($s);
+  my $mpfr = subnormalize_generic($s, @subn_args);
   my $get = sprintf("%.4g", Rmpfr_get_bfloat16(Math::MPFR->new($s), MPFR_RNDN));
   $get =~ s/\+//g;
   cmp_ok("$bf16", 'eq', $get, "$s: agreement with Rmpfr_get_bfloat16");
@@ -305,7 +306,7 @@ if($have_gmpq) { push @corners, Math::GMPq->new(3.3961775292304601e38), Math::GM
 
 for my $s (@corners) {
   my $bf16 = Math::Bfloat16->new($s);
-  my $mpfr = subnormalize_bfloat16($s);
+  my $mpfr = subnormalize_generic($s, @subn_args);
   my $get = sprintf("%.4g", Rmpfr_get_bfloat16(Math::MPFR->new($s), MPFR_RNDN));
   $get =~ s/\+//g;
   cmp_ok(lc("$bf16"), 'eq', lc($get), "$s: agreement with Rmpfr_get_bfloat16");
@@ -337,12 +338,12 @@ if($have_gmpq) { push @corners, Math::GMPq->new(3.4028236692093846e38), Math::GM
 
 for my $s (@corners) {
   my $bf16 = Math::Bfloat16->new($s);
-  my $mpfr = subnormalize_bfloat16($s);
+  my $mpfr = subnormalize_generic($s, @subn_args);
   my $get = sprintf("%.4g", Rmpfr_get_bfloat16(Math::MPFR->new($s), MPFR_RNDN));
   $get =~ s/\+//g;
   cmp_ok(lc("$bf16"), 'eq', lc($get), "$s: agreement with Rmpfr_get_bfloat16");
   cmp_ok(is_bf16_inf($bf16), '==', 1, "$s assigns to Math::Bfloat16 as +Inf");
-  cmp_ok(Rmpfr_inf_p($mpfr), '==', 1, "subnormalize_bfloat16 returns $s as Inf");
+  cmp_ok(Rmpfr_inf_p($mpfr), '==', 1, "subnormalize_generic returns $s as Inf");
   cmp_ok(Rmpfr_signbit($mpfr), '==', 0, "$s is +Inf");
 }
 
@@ -371,9 +372,9 @@ for my $s (@corners) {
   my $get = sprintf("%.4g", Rmpfr_get_bfloat16(Math::MPFR->new($s), MPFR_RNDN));
   $get =~ s/\+//g;
   cmp_ok(lc("$bf16"), 'eq', lc($get), "$s: agreement with Rmpfr_get_bfloat16");
-  my $mpfr = subnormalize_bfloat16($s);
+  my $mpfr = subnormalize_generic($s, @subn_args);
   cmp_ok(is_bf16_inf($bf16), '==', -1, "$s assigns to Math::Bfloat16 as -Inf");
-  cmp_ok(Rmpfr_inf_p($mpfr), '==', 1, "subnormalize_bfloat16 returns $s as Inf");
+  cmp_ok(Rmpfr_inf_p($mpfr), '==', 1, "subnormalize_generic returns $s as Inf");
   cmp_ok(Rmpfr_signbit($mpfr), '==', 1, "$s is -Inf");
 }
 

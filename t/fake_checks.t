@@ -145,7 +145,7 @@ for my $p(@powers) {
   }
 }
 
-# Test that Math::MPFR::subnormalize_bfloat16
+# Test that Math::MPFR::subnormalize_generic
 # fixes a known double-rounding anomaly.
 my $s = '13.75e-41';
 my $round = 0; # MPFR_RNDN
@@ -155,8 +155,8 @@ my $anom1 = Math::FakeBfloat16->new($s);
 cmp_ok(Math::FakeBfloat16::unpack_bf16_hex($anom1), 'eq', '0001', "direct assignment results in '0001'");
 cmp_ok(Math::MPFR::unpack_bfloat16($mpfr_anom1, $round), 'eq', '0002', "indirect assignment results in '0002'");
 cmp_ok($anom1, '!=', Math::FakeBfloat16->new($mpfr_anom1), "double-checked: values are different");
-my $mpfr_anom2 = Math::MPFR::subnormalize_bfloat16($s);
-cmp_ok(Math::MPFR::unpack_bfloat16($mpfr_anom2, $round), 'eq', '0001', "Math::MPFR::subnormalize_bfloat16() ok");
+my $mpfr_anom2 = Math::MPFR::subnormalize_generic($s, -132, 128, 8);
+cmp_ok(Math::MPFR::unpack_bfloat16($mpfr_anom2, $round), 'eq', '0001', "Math::MPFR::subnormalize_generic() ok");
 cmp_ok($anom1, '==', Math::FakeBfloat16->new($mpfr_anom2), "double-checked: values are equivalent");
 
 Rmpfr_set_default_prec($Math::MPFR::NV_properties{bits});
@@ -293,6 +293,12 @@ for my $s (@corners) {
   my $bf16 = Math::Bfloat16->new($s);
   my $fake = Math::FakeBfloat16->new($s);
   cmp_ok("$bf16", 'eq', "$fake", "$s: fake & real agree");
+}
+
+for my $iv(1, -1, 1234567, -1234567, ~0, ~0 >> 1, -(~0 >> 1), ~0 >> 2, -(~0 >> 2)) {
+  my $bf16 = Math::Bfloat16->new($iv);
+  my $fake = Math::FakeBfloat16->new($iv);
+  cmp_ok("$bf16", 'eq', "$fake", "IV $iv: fake & new agree");
 }
 
 done_testing();
