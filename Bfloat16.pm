@@ -270,6 +270,8 @@ sub bf16_nextbelow {
 }
 
 sub unpack_bf16_hex {
+  die "Math::Bfloat16::unpack_bf16_hex() accepts only a Math::Bfloat16 object as its argument"
+    unless ref($_[0]) eq "Math::Bfloat16";
   my @ret = _unpack_bf16_hex($_[0]);
   return join('', @ret);
 }
