@@ -21,10 +21,16 @@ cmp_ok($bf_max, '==', 3.39e38, "max Math::Bfloat16 value is 3.39e38");
 cmp_ok( (is_bf16_inf($bf_max + (2 ** 119))), '==', 1, "specified value is +Inf");
 cmp_ok( (is_bf16_inf($bf_max + (2 ** 118))), '==', 0, "specified value is finite");
 
-my $mpfr = Math::MPFR->new();
-Math::MPFR::Rmpfr_set_inf($mpfr, 1);
-cmp_ok(Math::Bfloat16->new($mpfr),  '==', $pinf, "MPFR('Inf')  assigns correctly");
-cmp_ok(Math::Bfloat16->new(-$mpfr), '==', $ninf, "MPFR('-Inf') assigns correctly");
+my $have_mpfr = 0;
+eval { require Math::MPFR;};
+$have_mpfr = 1 unless $@;
+
+if($have_mpfr){
+  my $mpfr = Math::MPFR->new();
+  Math::MPFR::Rmpfr_set_inf($mpfr, 1);
+  cmp_ok(Math::Bfloat16->new($mpfr),  '==', $pinf, "MPFR('Inf')  assigns correctly");
+  cmp_ok(Math::Bfloat16->new(-$mpfr), '==', $ninf, "MPFR('-Inf') assigns correctly");
+}
 
 
 done_testing();

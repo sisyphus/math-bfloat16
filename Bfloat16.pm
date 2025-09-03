@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 package Math::Bfloat16;
-use Math::MPFR qw(:mpfr);
+#use Math::MPFR qw(:mpfr);
 
 use constant bf16_EMIN     => -132;
 use constant bf16_EMAX     =>  128;
@@ -45,8 +45,8 @@ Math::Bfloat16->DynaLoader::bootstrap($VERSION);
 
 sub dl_load_flags {0} # Prevent DynaLoader from complaining and croaking
 
-if(Math::MPFR::MPFR_VERSION < 262912 || !Math::MPFR::Rmpfr_buildopt_bfloat16_p()) {
-  warn "Aborting: The underlying mpfr library (", Math::MPFR::MPFR_VERSION_STRING, ") does not support the __bf16 type";
+if(_MPFR_VERSION() < 262912 || !_buildopt_bfloat16_p()) {
+  warn "Aborting: The underlying mpfr library (", _MPFR_VERSION_STRING(), ") does not support the __bf16 type";
   exit 0;
 }
 
@@ -84,7 +84,11 @@ $Math::Bfloat16::bf16_NORM_MAX   = Math::Bfloat16->new(_get_norm_max());        
 
 sub new {
    shift if (@_ > 0 && !ref($_[0]) && _itsa($_[0]) == 4 && $_[0] eq "Math::Bfloat16");
-   if(!@_) { return _fromMPFR(Math::MPFR->new());}
+   if(!@_) {
+     my $ret = _fromIV(0);
+     bf16_set_nan($ret);
+     return $ret;
+   }
    die "Too many args given to new()" if @_ > 1;
    my $itsa = _itsa($_[0]);
    if($itsa) {
@@ -233,9 +237,38 @@ sub oload_spaceship {
 }
 
 sub oload_interp {
-   my $ret = Math::MPFR::Rmpfr_get_str(bf16_to_MPFR($_[0]), 10, 0, MPFR_RNDN);
+   my $ret = bfloat16_get_str(bf16_to_MPFR($_[0]), 10, 0, 0); # MPFR_RNDN
    $ret =~ s/\@//g;
    return $ret;
+}
+
+sub bfloat16_get_str {
+    my ($mantissa, $exponent) = _deref2($_[0], $_[1], $_[2], $_[3]);
+
+    if($mantissa =~ s/@//g) { return $mantissa }
+    if($mantissa =~ /\-/ && $mantissa !~ /[^0,\-]/) {return '-0'}
+    if($mantissa !~ /[^0]/ ) {return '0'}
+
+    my $len = substr($mantissa, 0, 1) eq '-' ? 2 : 1;
+
+    if(!$_[2]) {
+      while(length($mantissa) > $len && substr($mantissa, -1, 1) eq '0') {
+           substr($mantissa, -1, 1, '');
+      }
+    }
+
+    $exponent--;
+
+    my $sep = $_[1] <= 10 ? 'e' : '@';
+
+    if(length($mantissa) == $len) {
+      if($exponent) {return $mantissa . $sep . $exponent}
+      return $mantissa;
+    }
+
+    substr($mantissa, $len, 0, '.');
+    if($exponent) {return $mantissa . $sep . $exponent}
+    return $mantissa;
 }
 
 sub bf16_nextabove {
