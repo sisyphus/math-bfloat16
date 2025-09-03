@@ -31,6 +31,12 @@ if( -e 'have_bfloat16.exe') {
   my $size = $^O =~ /MSWin32/i ? `have_bfloat16.exe` : `./have_bfloat16.exe`;
   $have_bfloat16 = 1 if $size eq '2';
 }
+
+unless($have_bfloat16 == 1) {
+  warn "\n Aborting build of Math::Bfloat16 as the C compiler does not support the __bf16 type.\n",
+       " Build output was:\n $out\n";
+  exit 0;
+}
 ###########################################
 ###########################################
 
