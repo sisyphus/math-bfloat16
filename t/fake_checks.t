@@ -1,7 +1,6 @@
 use strict;
 use warnings;
 
-use Math::MPFR qw(:mpfr);
 use Math::Bfloat16 qw(:all);
 
 use Test::More;
@@ -15,21 +14,12 @@ if($@) {
   exit 0;
 }
 
-use constant EMIN_ORIG => Rmpfr_get_emin();
-use constant EMAX_ORIG => Rmpfr_get_emax();
-use constant EMIN_MOD  => bf16_EMIN;
-use constant EMAX_MOD  => bf16_EMAX;
+#use constant EMIN_ORIG => Rmpfr_get_emin();
+#use constant EMAX_ORIG => Rmpfr_get_emax();
+#use constant EMIN_MOD  => bf16_EMIN;
+#use constant EMAX_MOD  => bf16_EMAX;
 
-if($Math::MPFR::VERSION < 4.44) {
-  warn "\n Aborting this test script:\n",
-       " This test script needs Math-MPFR-4.44 but we have only version $Math::MPFR::VERSION\n",
-       " If Math-MPFR-4.44 is not yet on CPAN, install the devel version from the github repo\n at https://github.com/sisyphus/math-mpfr\n";
-       is(1, 1);
-       done_testing();
-       exit 0;
-}
-
-Rmpfr_set_default_prec(bf16_MANTBITS);
+Math::MPFR::Rmpfr_set_default_prec(bf16_MANTBITS);
 
 my @p = (  (2 ** (bf16_EMIN -1)),
            (2 ** bf16_EMIN) + (2 ** (bf16_EMIN + 2)),
@@ -159,7 +149,7 @@ my $mpfr_anom2 = Math::MPFR::subnormalize_generic($s, -132, 128, 8);
 cmp_ok(Math::MPFR::unpack_bfloat16($mpfr_anom2, $round), 'eq', '0001', "Math::MPFR::subnormalize_generic() ok");
 cmp_ok($anom1, '==', Math::FakeBfloat16->new($mpfr_anom2), "double-checked: values are equivalent");
 
-Rmpfr_set_default_prec($Math::MPFR::NV_properties{bits});
+Math::MPFR::Rmpfr_set_default_prec($Math::MPFR::NV_properties{bits});
 
 for my $man(1 ..15 ) {
   for my $exp(26 .. 41) {
