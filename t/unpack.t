@@ -24,34 +24,47 @@ cmp_ok(unpack_bf16_hex(Math::Bfloat16->new('-5e-41')),     'eq', '8001', "'-5e-4
 cmp_ok(unpack_bf16_hex(Math::Bfloat16->new(Math::MPFR->new('-5e-41'))), 'eq', '8001', "MPFR('5e-41') unpacks correctly") if $have_mpfr;
 
 if($have_mpfr) {
-    my $inc = Math::Bfloat16->new('0');
-    my $dec = Math::Bfloat16->new('-0');
+  my $inc = Math::Bfloat16->new('0');
+  my $dec = Math::Bfloat16->new('-0');
 
-    my $mpfr_inc   = Math::MPFR::Rmpfr_init2(16);
-    my $mpfr_dec   = Math::MPFR::Rmpfr_init2(16);
-    my $mpfr_store = Math::MPFR::Rmpfr_init2(16);
-    Math::MPFR::Rmpfr_set_zero($mpfr_store, 1); # Set to 0.
-    my $rnd = 0; # Round to nearest, ties to even.
+  my $mpfr_inc   = Math::MPFR::Rmpfr_init2(16);
+  my $mpfr_dec   = Math::MPFR::Rmpfr_init2(16);
+  my $mpfr_store = Math::MPFR::Rmpfr_init2(16);
+  Math::MPFR::Rmpfr_set_zero($mpfr_store, 1); # Set to 0.
+  my $rnd = 0; # Round to nearest, ties to even.
 
-    cmp_ok(unpack_bf16_hex($inc), 'eq', '0000', " 0 unpacks to 0000");
-    cmp_ok(unpack_bf16_hex($dec), 'eq', '8000', "-0 unpacks to 8000");
+  cmp_ok(unpack_bf16_hex($inc), 'eq', '0000', " 0 unpacks to 0000");
+  cmp_ok(unpack_bf16_hex($dec), 'eq', '8000', "-0 unpacks to 8000");
 
-    for(1..2060) {
-      bf16_nextabove($inc);
-      bf16_nextbelow($dec);
-      my $unpack_inc = unpack_bf16_hex($inc);
-      my $unpack_dec = unpack_bf16_hex($dec);
+  my $pack = pack_bf16_hex('0000');
+  cmp_ok(ref($pack), 'eq', "Math::Bfloat16", "'0000': pack returns Math::Bfloat16 object");
+  cmp_ok(is_bf16_zero($pack), '==', 1, "returns 0 as expected");
 
-      cmp_ok(length($unpack_inc), '==', 4, "length($unpack_inc) == 4");
-      cmp_ok(length($unpack_dec), '==', 4, "length($unpack_inc) == 4");
+  $pack = pack_bf16_hex('8000');
+  cmp_ok(ref($pack), 'eq', "Math::Bfloat16", "'8000': pack returns Math::Bfloat16 object");
+  cmp_ok(is_bf16_zero($pack), '==', -1, "returns -0 as expected");
 
-      Math::MPFR::Rmpfr_strtofr($mpfr_inc, $unpack_inc, 16, $rnd);
-      cmp_ok($mpfr_inc - $mpfr_store, '==', 1, "inc has been incremented to $unpack_inc");
-      Math::MPFR::Rmpfr_strtofr($mpfr_dec, $unpack_dec, 16, $rnd);
-      cmp_ok($mpfr_dec - $mpfr_inc, '==', 0x8000, "dec has been decremented to $unpack_dec");
+  for(1..2060) {
+    bf16_nextabove($inc);
+    bf16_nextbelow($dec);
+    my $unpack_inc = unpack_bf16_hex($inc);
+    my $pack_inc = pack_bf16_hex($unpack_inc);
+    cmp_ok($pack_inc, '==', $inc, "$unpack_inc: round_trip ok");
 
-      Math::MPFR::Rmpfr_set($mpfr_store, $mpfr_inc, $rnd);
-    }
+    my $unpack_dec = unpack_bf16_hex($dec);
+    my $pack_dec = pack_bf16_hex($unpack_dec);
+    cmp_ok($pack_dec, '==', $dec, "$unpack_dec: round_trip ok");
+
+    cmp_ok(length($unpack_inc), '==', 4, "length($unpack_inc) == 4");
+    cmp_ok(length($unpack_dec), '==', 4, "length($unpack_inc) == 4");
+
+    Math::MPFR::Rmpfr_strtofr($mpfr_inc, $unpack_inc, 16, $rnd);
+    cmp_ok($mpfr_inc - $mpfr_store, '==', 1, "inc has been incremented to $unpack_inc");
+    Math::MPFR::Rmpfr_strtofr($mpfr_dec, $unpack_dec, 16, $rnd);
+    cmp_ok($mpfr_dec - $mpfr_inc, '==', 0x8000, "dec has been decremented to $unpack_dec");
+
+    Math::MPFR::Rmpfr_set($mpfr_store, $mpfr_inc, $rnd);
+  }
 }
 if($have_mpfr) {
   my $inc = Math::Bfloat16->new('-inf');
@@ -73,7 +86,12 @@ if($have_mpfr) {
     bf16_nextabove($inc);
     bf16_nextbelow($dec);
     my $unpack_inc = unpack_bf16_hex($inc);
+    my $pack_inc = pack_bf16_hex($unpack_inc);
+    cmp_ok($pack_inc, '==', $inc, "$unpack_inc: round_trip ok");
+
     my $unpack_dec = unpack_bf16_hex($dec);
+    my $pack_dec = pack_bf16_hex($unpack_dec);
+    cmp_ok($pack_dec, '==', $dec, "$unpack_dec: round_trip ok");
 
     cmp_ok(length($unpack_inc), '==', 4, "length($unpack_inc) == 4");
     cmp_ok(length($unpack_dec), '==', 4, "length($unpack_inc) == 4");

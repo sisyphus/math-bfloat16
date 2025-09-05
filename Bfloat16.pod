@@ -127,6 +127,11 @@
       print unpack_bf16_hex(Math::Bfloat16->new(2) ** -133); # 0001
       print unpack_bf16_hex(Math::Bfloat16->new(2) ** 128);  # 7F80 (+inf)
 
+   $obj = pack_bf16_hex($string);
+    Convert the string ($string) returned by unpack_bf16_hex()
+    into a Math::Bfloat16 object whose value is the same as the
+    object from which $string was derived.
+
 =head1 MISCELLANEOUS FUNCTIONS
 
     $iv = is_bf16_nan($obj);

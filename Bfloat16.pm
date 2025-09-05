@@ -1,7 +1,6 @@
 use strict;
 use warnings;
 package Math::Bfloat16;
-#use Math::MPFR qw(:mpfr);
 
 use constant bf16_EMIN     => -132;
 use constant bf16_EMAX     =>  128;
@@ -54,7 +53,7 @@ my @tagged = qw( bf16_to_NV bf16_to_MPFR
                  is_bf16_nan is_bf16_inf is_bf16_zero bf16_set_nan bf16_set_inf bf16_set_zero
                  bf16_set
                  bf16_nextabove bf16_nextbelow
-                 unpack_bf16_hex
+                 unpack_bf16_hex pack_bf16_hex
                  bf16_EMIN bf16_EMAX bf16_MANTBITS
                );
 
@@ -307,6 +306,23 @@ sub unpack_bf16_hex {
     unless ref($_[0]) eq "Math::Bfloat16";
   my @ret = _unpack_bf16_hex($_[0]);
   return join('', @ret);
+}
+
+sub pack_bf16_hex {
+  my $arg = shift;
+  my $is_neg = '';
+  die "Invalid argument ($arg) given to pack_bf16_hex"
+    if(length($arg) != 4 || $arg =~ /[^0-9a-fA-F]/);
+
+  my $binstr = unpack 'B16', pack 'H4', $arg;
+  $is_neg = '-' if substr($binstr, 0, 1) eq '1';
+  my $power = oct('0b' .substr($binstr,1, 8)) - 127;
+  my $prefix = '0b1.';
+  if($power < -126) { # Subnormal
+    $power = -126;
+    $prefix = '0b0.';
+  }
+  return Math::Bfloat16->new($is_neg . $prefix . substr($binstr,9, 7) . "p$power");
 }
 
 sub _get_norm_max {
