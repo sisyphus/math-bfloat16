@@ -106,4 +106,38 @@ cmp_ok(unpack_bf16_hex(Math::Bfloat16->new(Math::MPFR->new('-5e-41'))), 'eq', '8
   }
 }
 
+{
+
+  # Check for values next to the subnormal/normal boundary
+  my $inc = Math::Bfloat16->new($Math::Bfloat16::bf16_DENORM_MAX);
+  my $dec = Math::Bfloat16->new(-$Math::Bfloat16::bf16_DENORM_MAX);
+
+  $inc -= 10 * $Math::Bfloat16::bf16_DENORM_MIN;
+  $dec += 10 * $Math::Bfloat16::bf16_DENORM_MIN;
+
+  my ($iv_inc, $iv_dec, $iv_store) = (0, 0, hex(unpack_bf16_hex($inc)));
+
+  for(1..20) {
+    bf16_nextabove($inc);
+    bf16_nextbelow($dec);
+    my $unpack_inc = unpack_bf16_hex($inc);
+    my $pack_inc = pack_bf16_hex($unpack_inc);
+    cmp_ok($pack_inc, '==', $inc, "$unpack_inc: round_trip ok");
+
+    my $unpack_dec = unpack_bf16_hex($dec);
+    my $pack_dec = pack_bf16_hex($unpack_dec);
+    cmp_ok($pack_dec, '==', $dec, "$unpack_dec: round_trip ok");
+
+    cmp_ok(length($unpack_inc), '==', 4, "length($unpack_inc) == 4");
+    cmp_ok(length($unpack_dec), '==', 4, "length($unpack_inc) == 4");
+
+    $iv_inc = hex($unpack_inc);
+    cmp_ok($iv_inc - $iv_store, '==', 1, "inc has been incremented to $unpack_inc");
+    $iv_dec = hex($unpack_dec);
+    cmp_ok($iv_dec - $iv_inc, '==', 0x8000, "dec has been decremented to $unpack_dec");
+
+    $iv_store = $iv_inc;
+  }
+}
+
 done_testing();
