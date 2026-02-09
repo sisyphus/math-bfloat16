@@ -43,6 +43,7 @@ SV * _itsa(pTHX_ SV * a) {
     if(strEQ(h, "Math::GMPf")) return newSVuv(6);
     if(strEQ(h, "Math::GMPq")) return newSVuv(7);
     if(strEQ(h, "Math::Bfloat16")) return newSVuv(20);
+    if(strEQ(h, "Math::Float32"))  return newSVuv(22);
     croak("The Math::Bfloat16::_itsa XSub does not accept %s objects.", h);
   }
   croak("The Math::Bfloat16::_itsa XSub has been given an invalid argument (probably undefined)");
@@ -101,6 +102,31 @@ SV * _fromBfloat16(pTHX_ __bf16 * in) {
 
   *f_obj = *in;
 
+  sv_setiv(obj, INT2PTR(IV,f_obj));
+  SvREADONLY_on(obj);
+  return obj_ref;
+}
+
+SV * _fromFloat32(pTHX_ float * in) {
+
+  __bf16 * f_obj;
+  SV * obj_ref, * obj;
+#ifndef WE_HAVE_BENDIAN
+  int i;
+#endif
+
+  Newx(f_obj, 1, __bf16);
+  if(f_obj == NULL) croak("Failed to allocate memory in _fromFloat32 function");
+  obj_ref = newSV(0);
+  obj = newSVrv(obj_ref, "Math::Bfloat16");
+
+#ifdef WE_HAVE_BENDIAN /* Big Endian architecture */
+  memcpy(f_obj, in, 2);
+#else
+  /* Cannot use memcpy() */
+  for(i = 3; i >=2; i--)
+    ((unsigned char*)f_obj)[i-2] = ((unsigned char*)in)[i];
+#endif
   sv_setiv(obj, INT2PTR(IV,f_obj));
   SvREADONLY_on(obj);
   return obj_ref;
@@ -251,6 +277,24 @@ SV * bf16_to_MPFR(pTHX_ __bf16 * f16_obj) {
   mpfr_set_bfloat16(*mpfr_t_obj, *f16_obj, MPFR_RNDN);
 
   sv_setiv(obj, INT2PTR(IV,mpfr_t_obj));
+  SvREADONLY_on(obj);
+  return obj_ref;
+
+}
+
+SV * bf16_to_Float32(pTHX_ __bf16 * f16_obj) {
+
+  float * flt_obj;
+  SV * obj_ref, * obj;
+
+  Newx(flt_obj, 1, float);
+  if(flt_obj == NULL) croak("Failed to allocate memory in bf16_to_Float32 function");
+  obj_ref = newSV(0);
+  obj = newSVrv(obj_ref, "Math::Float32");
+
+  *flt_obj = (float) *f16_obj;
+
+  sv_setiv(obj, INT2PTR(IV,flt_obj));
   SvREADONLY_on(obj);
   return obj_ref;
 
@@ -718,6 +762,13 @@ CODE:
 OUTPUT:  RETVAL
 
 SV *
+_fromFloat32 (in)
+	float *	in
+CODE:
+  RETVAL = _fromFloat32 (aTHX_ in);
+OUTPUT:  RETVAL
+
+SV *
 _fromNV (in)
 	SV *	in
 CODE:
@@ -771,6 +822,13 @@ bf16_to_MPFR (f16_obj)
 	__bf16 *	f16_obj
 CODE:
   RETVAL = bf16_to_MPFR (aTHX_ f16_obj);
+OUTPUT:  RETVAL
+
+SV *
+bf16_to_Float32 (f16_obj)
+	__bf16 *	f16_obj
+CODE:
+  RETVAL = bf16_to_Float32 (aTHX_ f16_obj);
 OUTPUT:  RETVAL
 
 void

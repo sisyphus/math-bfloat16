@@ -61,16 +61,17 @@
      Set $obj to a Math::Bfloat16 object with value $val.
      If $val is not provided, the $obj has the value NaN.
      $val cab be an IV (integer), an NV (perl float), a PV (string),
-     a Math::Bfloat16 object, a Math::MPFR object, a Math::GMPf
-     object or a Math::GMPq object.
+     a Math::Bfloat16 object, or a Math::Float32 object, a Math::MPFR
+      object, a Math::GMPf object or a Math::GMPq object.
      See the SYNOPSIS section (above) for some elaboration,
-     If necessay, $val will be rounded (to nearest, ties to even)
-     to fit into the __bf16 type.
+     If necessary, $val will be rounded.
+     If $val is a Math::Float32 then rounding will be towards zero;
+     otherwise rounding will be towards nearest, with ties to even).
 
     bf16_set($obj, $val);
-     Set the value of $obj to the value specified by $val (rounded
-     to nearest, ties to even if necessary.)
      $val can be any one of the types that new() accepts.
+     Set the value of $obj to the value specified by $val, rounded
+     as detailed in the new() documentation.
 
     bf16_set_nan($obj);
      Se the value of $obj to NaN.
@@ -152,9 +153,15 @@
     $nv then holds exactly the same value as $obj.
 
    $MPFR_OBJECT = bf16_to_MPFR($obj);
-    (It's advisable to load Math::MPFR before calling this function.)
+    Load Math-MPFR-4.43 or later before calling this function.
     Return the value of $obj as an 8-bit precision Math::MPFR object.
     This Math::MPFR object holds exactly the same value as $obj.
+
+   $FLOAT32_OBJECT = bf16_to_Float32($obj);
+    Load Math-Float32-0.02 or later before calling this function.
+    Return the value of $obj as a 24-bit precision Math::Float32
+    object.
+    This Math::Float32 object holds exactly the same value as $obj.
 
    bf16_nextabove($obj);
     Increments the value in $obj by the smallest possible positive,
@@ -168,7 +175,7 @@
 
     This program is free software; you may redistribute it and/or
     modify it under the same terms as Perl itself.
-    Copyright 2025 Sisyphus.
+    Copyright 2025-26 Sisyphus.
 
 =head1 AUTHOR
 

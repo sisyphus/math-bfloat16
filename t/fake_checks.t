@@ -149,7 +149,13 @@ my $mpfr_anom2 = Math::MPFR::subnormalize_generic($s, -132, 128, 8);
 cmp_ok(Math::MPFR::unpack_bfloat16($mpfr_anom2, $round), 'eq', '0001', "Math::MPFR::subnormalize_generic() ok");
 cmp_ok($anom1, '==', Math::FakeBfloat16->new($mpfr_anom2), "double-checked: values are equivalent");
 
-Math::MPFR::Rmpfr_set_default_prec($Math::MPFR::NV_properties{bits});
+my $once_arg;
+{
+  no warnings 'once';
+  $once_arg = $Math::MPFR::NV_properties{bits}
+}
+
+Math::MPFR::Rmpfr_set_default_prec($once_arg);
 
 for my $man(1 ..15 ) {
   for my $exp(26 .. 41) {

@@ -9,6 +9,7 @@ mpfr_ver.in
 mpfr_opt.in
 t/basic.t
 t/fake_checks.t
+t/Float32.t
 t/inf.t
 t/mpfr_checks.t
 t/new.t
