@@ -49,9 +49,9 @@ if(_MPFR_VERSION() < 262912 || !_buildopt_bfloat16_p()) {
   exit 0;
 }
 
-my @tagged = qw( bf16_to_NV bf16_to_MPFR
+my @tagged = qw( bf16_to_NV bf16_to_MPFR bf16_to_Float32
                  is_bf16_nan is_bf16_inf is_bf16_zero bf16_set_nan bf16_set_inf bf16_set_zero
-                 bf16_set
+                 bf16_set bf16_set_flt bf16_get_flt
                  bf16_nextabove bf16_nextbelow
                  unpack_bf16_hex pack_bf16_hex
                  bf16_EMIN bf16_EMAX bf16_MANTBITS
@@ -71,6 +71,7 @@ my @tagged = qw( bf16_to_NV bf16_to_MPFR
                7  => sub {return _fromGMPq(shift)},
 
                20 => sub {return _fromBfloat16(shift)},
+               22 => sub {return _fromFloat32(shift)},
                );
 
 $Math::Bfloat16::bf16_DENORM_MIN = Math::Bfloat16->new(2) ** (bf16_EMIN - 1);                   # 9.184e-41
