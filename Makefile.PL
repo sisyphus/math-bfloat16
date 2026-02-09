@@ -113,7 +113,6 @@ my %options = (
 my $prereq =  { 'Test::More' => '0.88',
                 'Test::Warn' => '0.36',
                 'Exporter'   => '5.58',
-                'Math::MPFR' => '4.43',
               };
 
 $options{PREREQ_PM} = $prereq;
