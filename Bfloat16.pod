@@ -56,17 +56,21 @@
 
 =head1 ASSIGNMENT FUNCTIONS
 
-    $obj = Math::Bfloat16->new($[val]);
-    $obj = Math::Bfloat16::new([$val]);
+    $obj = Math::Bfloat16->new($val);
+    $obj = Math::Bfloat16::new($val);
      Set $obj to a Math::Bfloat16 object with value $val.
-     If $val is not provided, the $obj has the value NaN.
-     $val cab be an IV (integer), an NV (perl float), a PV (string),
-     a Math::Bfloat16 object, or a Math::Float32 object, a Math::MPFR
+     If $val is not provided, then $obj takes the value NaN.
+     $val can be an IV (integer), an NV (perl float), a PV (string),
+     a Math::Bfloat16 object, a Math::Float32 object, a Math::MPFR
       object, a Math::GMPf object or a Math::GMPq object.
      See the SYNOPSIS section (above) for some elaboration,
      If necessary, $val will be rounded.
-     If $val is a Math::Float32 then rounding will be towards zero;
-     otherwise rounding will be towards nearest, with ties to even).
+     Rounding will be towards nearest (with ties to even), unless
+     $val is a Math::Float32 object - in which case it will be
+     truncated (ie rounded towards zero).
+     If you wish the Math::Float32 value to be assigned with
+     rounding to nearest (ties to even) then assign it as:
+       $obj = Math::Bfloat16::new(rndn_Float32($val));
 
     bf16_set($obj, $val);
      $val can be any one of the types that new() accepts.
@@ -91,14 +95,15 @@
  and '**=' operators.
  The '%' and '%=' overloading calls the fmod function.
 
+ The overloaded arithmetic operators accept IVs, NVs, PVs, Math::Float32
+ objects and Math::Bfloat16 objects.
+ Math::Float32 objects will be truncated (rounded towards zero) to
+ Math::Bloat16 objects. If you want them to instead be rounded
+ towards nearest with ties to even, then pass them as rndn_flt32($obj).
+
  The 'log', 'exp', 'sqrt', 'abs' and 'int' functions are also
  overloaded.
-
- The overloaded operations accept IVs, NVs, PVs, Math::Float32
- objects and Math::Bfloat16 objects.
- Math::Float32 objects will be truncated (rounded towards
- zero) to Math::Bloat16 objects.
-
+ Obviously, they accept only Math::Bfloat16 objects.
 
 =head1 COMPARISON
 
@@ -138,6 +143,13 @@
     Convert the string ($string) returned by unpack_bf16_hex()
     into a Math::Bfloat16 object whose value is the same as the
     object from which $string was derived.
+
+   $nv = rndn_Float32($flt32); # $flt32 is a Math::Float32 object.
+    Return the value of Math::Float32 object cast to an NV.
+    Then, setting $bf16=Math::Bfloat16->new($nv) will assign the
+    value of $flt32 rounded to nearest with ties to even.
+    Setting $bf16=Math::Bfloat->new($flt32) will instead assign
+    the truncated value - ie rounded towards zero.
 
 =head1 MISCELLANEOUS FUNCTIONS
 

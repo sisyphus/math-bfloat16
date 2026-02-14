@@ -51,7 +51,7 @@ if(_MPFR_VERSION() < 262912 || !_buildopt_bfloat16_p()) {
 
 my @tagged = qw( bf16_to_NV bf16_to_MPFR bf16_to_Float32
                  is_bf16_nan is_bf16_inf is_bf16_zero bf16_set_nan bf16_set_inf bf16_set_zero
-                 bf16_set bf16_set_flt bf16_get_flt
+                 bf16_set rndn_Float32
                  bf16_nextabove bf16_nextbelow
                  unpack_bf16_hex pack_bf16_hex
                  bf16_EMIN bf16_EMAX bf16_MANTBITS
@@ -337,6 +337,10 @@ sub _get_denorm_max {
   my $min = $max - (bf16_MANTBITS - 2);
   for my $p($min .. $max) { $ret += 2 ** -$p }
   return $ret;
+}
+
+sub rndn_Float32 {
+  Math::Float32::flt_to_NV($_[0]);
 }
 
 1;
