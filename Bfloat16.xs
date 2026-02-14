@@ -39,11 +39,11 @@ SV * _itsa(pTHX_ SV * a) {
   if(sv_isobject(a)) {
     const char* h = HvNAME(SvSTASH(SvRV(a)));
 
-    if(strEQ(h, "Math::MPFR")) return newSVuv(5);
-    if(strEQ(h, "Math::GMPf")) return newSVuv(6);
-    if(strEQ(h, "Math::GMPq")) return newSVuv(7);
-    if(strEQ(h, "Math::Bfloat16")) return newSVuv(20);
-    if(strEQ(h, "Math::Float32"))  return newSVuv(22);
+    if(strEQ(h, "Math::Bfloat16")) return newSVuv(1);
+    if(strEQ(h, "Math::Float32"))  return newSVuv(5);
+    if(strEQ(h, "Math::MPFR")) return newSVuv(6);
+    if(strEQ(h, "Math::GMPf")) return newSVuv(7);
+    if(strEQ(h, "Math::GMPq")) return newSVuv(8);
     croak("The Math::Bfloat16::_itsa XSub does not accept %s objects.", h);
   }
   croak("The Math::Bfloat16::_itsa XSub has been given an invalid argument (probably undefined)");

@@ -94,6 +94,12 @@
  The 'log', 'exp', 'sqrt', 'abs' and 'int' functions are also
  overloaded.
 
+ The overloaded operations accept IVs, NVs, PVs, Math::Float32
+ objects and Math::Bfloat16 objects.
+ Math::Float32 objects will be truncated (rounded towards
+ zero) to Math::Bloat16 objects.
+
+
 =head1 COMPARISON
 
  The following comparison operators are also overloaded :
