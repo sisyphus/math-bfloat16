@@ -12,6 +12,7 @@
 #include "XSUB.h"
 
 #define MPFR_WANT_BFLOAT16 1
+#define MPFR_WANT_FLOAT128 1
 #include <mpfr.h>
 
 #define TYPE_PRECISION 8
@@ -721,6 +722,110 @@ SV * _MPFR_VERSION_STRING(pTHX) {
   return newSVpv(MPFR_VERSION_STRING, 0);
 }
 
+int _SVisUV(SV * in) {
+  if(SvUOK(in)) return  1;
+  return 0;
+}
+
+int bf16_cmp_IV(__bf16 * a, SV * b) {
+  mpfr_t scratchpad, t2;
+  int ret;
+  mpfr_init2(scratchpad, 8);
+  mpfr_set_bfloat16(scratchpad, *a, MPFR_RNDN);
+
+#if IVSIZE > LONGSIZE
+  mpfr_init2(t2, 64);
+  if(SvUOK(b)) {
+    mpfr_set_uj(t2, SvUVX(b), MPFR_RNDN);
+    ret = mpfr_cmp(scratchpad, t2);
+  }
+  else {
+    mpfr_set_sj(t2, SvIVX(b), MPFR_RNDN);
+    ret = mpfr_cmp(scratchpad, t2);
+  }
+  mpfr_clear(t2);
+
+#else
+  if(SvUOK(b)) ret = mpfr_cmp_ui(scratchpad, SvUVX(b));
+  else ret         = mpfr_cmp_si(scratchpad, SvIVX(b));
+
+#endif
+  mpfr_clear(scratchpad);
+  return ret;
+}
+
+int bf16_cmp_NV(__bf16 * a, SV * b) {
+  mpfr_t scratchpad, t2;
+  int ret;
+  mpfr_init2(scratchpad, 8);
+  mpfr_set_bfloat16(scratchpad, *a, MPFR_RNDN);
+
+#if defined(USE_LONG_DOUBLE)
+  ret = mpfr_cmp_ld(scratchpad, SvNVX(b));
+
+#elif defined(USE_QUADMATH)
+  mpfr_init2(t2, 113);
+  mpfr_set_float128(t2, SvNVX(b), MPFR_RNDN);
+  ret = mpfr_cmp(scratchpad, t2);
+  mpfr_clear(t2);
+
+#else
+  ret = mpfr_cmp_d(scratchpad, SvNVX(b));
+
+#endif
+  mpfr_clear(scratchpad);
+  return ret;
+}
+
+int bf16_cmp_Float32(__bf16 * a, float * b) {
+  mpfr_t scratchpad, t2;
+  int ret;
+  mpfr_init2(scratchpad, 8);
+  mpfr_init2(t2, 24);
+  mpfr_set_bfloat16(scratchpad, *a, MPFR_RNDN);
+  mpfr_set_flt(t2, *b, MPFR_RNDN);
+  ret = mpfr_cmp(scratchpad, t2);
+  mpfr_clear(scratchpad);
+  mpfr_clear(t2);
+  return ret;
+}
+
+int bf16_cmp_GMPf(__bf16 * a, mpf_t * b) {
+  mpfr_t scratchpad;
+  int ret;
+  mpfr_init2(scratchpad, 8);
+  mpfr_set_bfloat16(scratchpad, *a, MPFR_RNDN);
+  ret = mpfr_cmp_f(scratchpad, *b);
+  mpfr_clear(scratchpad);
+  return ret;
+}
+
+int bf16_cmp_GMPq(__bf16 * a, mpq_t * b) {
+  mpfr_t scratchpad;
+  int ret;
+  mpfr_init2(scratchpad, 8);
+  mpfr_set_bfloat16(scratchpad, *a, MPFR_RNDN);
+  ret = mpfr_cmp_q(scratchpad, *b);
+  mpfr_clear(scratchpad);
+  return ret;
+}
+
+int bf16_cmp_MPFR(__bf16 * a, mpfr_t * b) {
+  mpfr_t scratchpad;
+  int ret;
+  mpfr_init2(scratchpad, 8);
+  mpfr_set_bfloat16(scratchpad, *a, MPFR_RNDN);
+  ret = mpfr_cmp(scratchpad, *b);
+  mpfr_clear(scratchpad);
+  return ret;
+}
+
+int bf16_cmp_bf16(__bf16 * a, __bf16 * b) {
+  if(*a > *b) return 1;
+  if(*a == *b) return 0;
+  return -1;
+}
+
 void DESTROY(SV * obj) {
   /* printf("Destroying object\n"); *//* debugging check */
   Safefree(INT2PTR(__bf16 *, SvIVX(SvRV(obj))));
@@ -1184,6 +1289,45 @@ CODE:
   RETVAL = _MPFR_VERSION_STRING (aTHX);
 OUTPUT:  RETVAL
 
+
+int
+_SVisUV (in)
+	SV *	in
+
+int
+bf16_cmp_IV (a, b)
+	__bf16 *	a
+	SV *	b
+
+int
+bf16_cmp_NV (a, b)
+	__bf16 *	a
+	SV *	b
+
+int
+bf16_cmp_Float32 (a, b)
+	__bf16 *	a
+	float *	b
+
+int
+bf16_cmp_GMPf (a, b)
+	__bf16 *	a
+	mpf_t *	b
+
+int
+bf16_cmp_GMPq (a, b)
+	__bf16 *	a
+	mpq_t *	b
+
+int
+bf16_cmp_MPFR (a, b)
+	__bf16 *	a
+	mpfr_t *	b
+
+int
+bf16_cmp_bf16 (a, b)
+	__bf16 *	a
+	__bf16 *	b
 
 void
 DESTROY (obj)

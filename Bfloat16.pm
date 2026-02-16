@@ -51,6 +51,7 @@ if(_MPFR_VERSION() < 262912 || !_buildopt_bfloat16_p()) {
 
 my @tagged = qw( bf16_to_NV bf16_to_MPFR bf16_to_Float32
                  is_bf16_nan is_bf16_inf is_bf16_zero bf16_set_nan bf16_set_inf bf16_set_zero
+                 bf16_cmp
                  bf16_set rndn_Float32
                  bf16_nextabove bf16_nextbelow
                  unpack_bf16_hex pack_bf16_hex
@@ -71,6 +72,16 @@ my @tagged = qw( bf16_to_NV bf16_to_MPFR bf16_to_Float32
                6  => sub {return _fromMPFR(shift)},
                7  => sub {return _fromGMPf(shift)},
                8  => sub {return _fromGMPq(shift)},
+               );
+
+%Math::Bfloat16::cmp_handler = (
+               1  => sub {return bf16_cmp_bf16(@_)},
+               2  => sub {return bf16_cmp_IV(@_)},
+               3  => sub {return bf16_cmp_NV(@_)},
+               5  => sub {return bf16_cmp_Float32(@_)},
+               6  => sub {return bf16_cmp_MPFR(@_)},
+               7  => sub {return bf16_cmp_GMPf(@_)},
+               8  => sub {return bf16_cmp_GMPq(@_)},
                );
 
 $Math::Bfloat16::bf16_DENORM_MIN = Math::Bfloat16->new(2) ** (bf16_EMIN - 1);                   # 9.184e-41
@@ -173,66 +184,47 @@ sub oload_abs {
 }
 
 sub oload_equiv {
-   my $itsa = _itsa($_[1]);
-   if($itsa < 6) {
-     my $coderef = $Math::Bfloat16::handler{$itsa};
-     return _oload_equiv($_[0], $coderef->($_[1]), 0);
-   }
-   die "Unrecognized 2nd argument passed to oload_equiv() function";
+  return 0 if _nan_involved($_[0], $_[1]);
+  return 1 if bf16_cmp(@_) == 0;
+  return 0;
 }
 
 sub oload_not_equiv {
-   my $itsa = _itsa($_[1]);
-   if($itsa < 6) {
-     my $coderef = $Math::Bfloat16::handler{$itsa};
-     return _oload_not_equiv($_[0], $coderef->($_[1]), 0);
-   }
-   die "Unrecognized 2nd argument passed to oload_not_equiv() function";
+  return 1 if _nan_involved($_[0], $_[1]);
+  return 1 if bf16_cmp(@_) != 0;
+  return 0;
 }
 
 sub oload_gt {
-   my $itsa = _itsa($_[1]);
-   if($itsa < 6) {
-     my $coderef = $Math::Bfloat16::handler{$itsa};
-     return _oload_gt($_[0], $coderef->($_[1]), $_[2]);
-   }
-   die "Unrecognized 2nd argument passed to oload_gt() function";
+  return 0 if _nan_involved($_[0], $_[1]);
+  return 1 if bf16_cmp(@_) > 0;
+  return 0;
 }
 
 sub oload_gte {
-   my $itsa = _itsa($_[1]);
-   if($itsa < 6) {
-     my $coderef = $Math::Bfloat16::handler{$itsa};
-     return _oload_gte($_[0], $coderef->($_[1]), $_[2]);
-   }
-   die "Unrecognized 2nd argument passed to oload_gte() function";
+  return 0 if _nan_involved($_[0], $_[1]);
+  return 1 if bf16_cmp(@_) >= 0;
+  return 0;
 }
 
 sub oload_lt {
-   my $itsa = _itsa($_[1]);
-   if($itsa < 6) {
-     my $coderef = $Math::Bfloat16::handler{$itsa};
-     return _oload_lt($_[0], $coderef->($_[1]), $_[2]);
-   }
-   die "Unrecognized 2nd argument passed to oload_lt() function";
+  return 0 if _nan_involved($_[0], $_[1]);
+  return 1 if bf16_cmp(@_) < 0;
+  return 0;
 }
 
 sub oload_lte {
-   my $itsa = _itsa($_[1]);
-   if($itsa < 6) {
-     my $coderef = $Math::Bfloat16::handler{$itsa};
-     return _oload_lte($_[0], $coderef->($_[1]), $_[2]);
-   }
-   die "Unrecognized 2nd argument passed to oload_lte() function";
+  return 0 if _nan_involved($_[0], $_[1]);
+  return 1 if bf16_cmp(@_) <= 0;
+  return 0;
 }
 
 sub oload_spaceship {
-   my $itsa = _itsa($_[1]);
-   if($itsa < 6) {
-     my $coderef = $Math::Bfloat16::handler{$itsa};
-     return _oload_spaceship($_[0], $coderef->($_[1]), $_[2]);
-   }
-   die "Unrecognized 2nd argument passed to oload_spaceship() function";
+  return undef if _nan_involved($_[0], $_[1]);
+  my $ret = bf16_cmp(@_);
+  return 1 if $ret > 0;
+  return -1 if $ret < 0;
+  return 0;
 }
 
 sub oload_interp {
@@ -341,6 +333,34 @@ sub _get_denorm_max {
 
 sub rndn_Float32 {
   Math::Float32::flt_to_NV($_[0]);
+}
+
+sub bf16_cmp {
+  my $itsa = _itsa($_[1]);
+  my ($ret, $coderef);
+  if($itsa == 4) {
+    my $second_arg = $_[1] + 0;
+    $itsa = _itsa($second_arg);
+    $coderef = $Math::Bfloat16::cmp_handler{$itsa};
+    $ret = $coderef->($_[0], $second_arg);
+  }
+  else {
+    $coderef = $Math::Bfloat16::cmp_handler{$itsa};
+    $ret = $coderef->($_[0], $_[1]);
+  }
+  $ret *= -1 if $_[2];
+  return $ret;
+}
+
+sub _nan_involved {
+  # Takes 2 arguments - a Math::BigFloat object and a second arg which
+  # can be any of PV, IV, NV, Math::Float32, Math::GMPf, Math::GMPq
+  # or Math::MPFR object. Return 1 if at least one of the args is NaN.
+  return 1 if is_bf16_nan($_[0]);
+  my $itsa = _itsa($_[1]);
+  return 1 if ($itsa == 1 && is_bf16_nan($_[1]));
+  if($itsa == 3 || $itsa == 4 || $itsa == 5 || $itsa == 6) { return 1 if $_[1] != $_[1] }
+  return 0;
 }
 
 1;

@@ -202,8 +202,8 @@ for my $man(1 ..15 ) {
     cmp_ok(lc("$bf16_1"), 'eq', lc($get), "$s: agreement with Rmpfr_get_bfloat16");
     my $mpfr_1 = subnormalize_generic($s, @subn_args);
     my $mpfr_2 = subnormalize_generic(Math::MPFR->new($s), @subn_args);
-    cmp_ok($bf16_1, '==', "$mpfr_1", "$s (strings) agreement");
-    cmp_ok($bf16_1, '==', "$mpfr_2", "$s (strings & mpfr) agreement");
+    cmp_ok("$bf16_1", 'eq', "$mpfr_1", "$s (strings) agreement");
+    cmp_ok("$bf16_1", 'eq', "$mpfr_2", "$s (strings & mpfr) agreement");
     my $nv = $s + 0;
     my $bf16_2 = Math::Bfloat16->new($nv);
     cmp_ok($bf16_1, '==', $bf16_2, "$nv: both Math::Bfloat16 objects are equivalent");
@@ -212,8 +212,8 @@ for my $man(1 ..15 ) {
     cmp_ok(lc("$bf16_1"), 'eq', lc($get), "$s: agreement with Rmpfr_get_bfloat16");
     my $mpfr_3 = subnormalize_generic($nv, @subn_args);
     my $mpfr_4 = subnormalize_generic(Math::MPFR->new($nv), @subn_args);
-    cmp_ok($bf16_2, '==', "$mpfr_3", "$s (NVs) agreement");
-    cmp_ok($bf16_2, '==', "$mpfr_4", "$s (NVs & mpfr) agreement");
+    cmp_ok("$bf16_2", 'eq', "$mpfr_3", "$s (NVs) agreement");
+    cmp_ok("$bf16_2", 'eq', "$mpfr_4", "$s (NVs & mpfr) agreement");
   }
 }
 

@@ -5,6 +5,7 @@ use Math::Bfloat16 qw(:all);
 use Test::More;
 
 my($have_gmpf, $have_gmpq, $have_mpfr) = (0, 0, 0);
+my $operation;
 
 eval { require Math::GMPf;};
 $have_gmpf = 1 unless $@;
@@ -154,16 +155,20 @@ cmp_ok(-$fmod1 % $fmod2, '==', '-1.875e-1', "-2.6 % 1.2 == -1.875e-1");
 cmp_ok($fmod1 % -$fmod2, '==', '1.875e-1', "2.6 % -1.2 == 1.875e-1");
 cmp_ok(-$fmod1 % -$fmod2, '==', '-1.875e-1', "-2.6 % -1.2 == -1.875e-1");
 
-cmp_ok($fmod2 % $fmod1, '==', '1.203', "1.2 % 1.6 == 1.203");
-cmp_ok(-$fmod2 % $fmod1, '==', '-1.203', "-1.2 % 1.6 == -1.203");
-cmp_ok($fmod2 % -$fmod1, '==', '1.203', "1.2 % -1.6 == 1.203");
-cmp_ok(-$fmod2 % -$fmod1, '==', '-1.203', "-1.2 % -1.6 == -1.203");
+$operation = $fmod2 % $fmod1;
+cmp_ok("$operation", 'eq', '1.203', "1.2 % 1.6 == 1.203");
+$operation = -$fmod2 % $fmod1;
+cmp_ok("$operation", 'eq', '-1.203', "-1.2 % 1.6 == -1.203");
+$operation = $fmod2 % -$fmod1;
+cmp_ok("$operation", 'eq', '1.203', "1.2 % -1.6 == 1.203");
+$operation = -$fmod2 % -$fmod1;
+cmp_ok("$operation", 'eq', '-1.203', "-1.2 % -1.6 == -1.203");
 
 $fmod2 %= $fmod1;
-cmp_ok($fmod2, '==', '1.203', "value doesn't change under %= operation");
+cmp_ok("$fmod2", 'eq', '1.203', "value doesn't change under %= operation");
 
 $fmod1 %= $fmod2;
-cmp_ok($fmod1, '==', '1.875e-1', "value changes to 1.875e-1 under %= operation");
+cmp_ok("$fmod1", 'eq', '1.875e-1', "value changes to 1.875e-1 under %= operation");
 
 ################################################
 ################################################
@@ -201,17 +206,17 @@ for (my $i = 0; $i < $index; $i++) {
 
 my $root = sqrt(Math::Bfloat16->new(2));
 cmp_ok($root, '==', Math::Bfloat16->new('1.414'), "sqrt(2) == 1.414 (MPFR)");
-cmp_ok($root, '==', '1.414', "sqrt(2) == '1.414'");
+cmp_ok("$root", 'eq', '1.414', "sqrt(2) == '1.414'");
 cmp_ok($root, '==', Math::Bfloat16->new(2) ** 0.5, "sqrt(2) == 2 ** 0.5");
 cmp_ok($root, '==', 2 ** Math::Bfloat16->new(0.5), "sqrt(2) == 2 ** 0.5");
 
 my $log = log(Math::Bfloat16->new(10));
 cmp_ok($log, '==', Math::Bfloat16->new('2.297'), "log(10) == 2.297 (MPFR)");
-cmp_ok($log, '==', '2.297', "log(10) == '2.297'");
+cmp_ok("$log", 'eq', '2.297', "log(10) == '2.297'");
 
 my $exp = exp(Math::Bfloat16->new('2.3027'));
 cmp_ok($exp, '==', Math::Bfloat16->new('9.938'), "exp('2.297') == 9.938 (MPFR)");
-cmp_ok($exp, '==', '9.938', "exp('2.297') == '9.938'");
+cmp_ok("$exp", 'eq', '9.938', "exp('2.297') == '9.938'");
 
 my $int = int(Math::Bfloat16->new(21.9));
 cmp_ok($int, '==', 21, "int(21.9) == 21");
@@ -280,7 +285,8 @@ cmp_ok($interp, 'eq', "$testing", "interpolation examines object returned by bf1
 bf16_set($bf16_obj, '1.175e-38');
 my $denorm_min = Math::Bfloat16->new(2) ** -133;
 
-cmp_ok($bf16_obj - $denorm_min, '==', '1.166e-38', 'normal_min - denorm_min == denorm_max');
+$operation = $bf16_obj - $denorm_min;
+cmp_ok("$operation", 'eq', '1.166e-38', 'normal_min - denorm_min == denorm_max');
 cmp_ok($denorm_min + '1.166e-38', '==', $bf16_obj, "denorm_min + denorm_max == normal_min");
 
 

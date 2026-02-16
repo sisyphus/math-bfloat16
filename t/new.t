@@ -1,8 +1,15 @@
 use strict;
 use warnings;
+use Config;
 use Math::Bfloat16 qw(:all);
 
 use Test::More;
+
+my $printf_bits = 17;
+$printf_bits = 36 if $Config{nvtype} =~ /float/i;
+if($Config{nvtype} eq 'long double' && $Config{nvsize} > 8) {
+  $printf_bits = length(sqrt 2) < 21 ? 21 : 36;
+}
 
 my($have_gmpf, $have_gmpq, $have_mpfr) = (0, 0, 0);
 
@@ -46,7 +53,7 @@ cmp_ok(is_bf16_nan(Math::Bfloat16::new()), '==', 1, "Math::Bfloat16::new() retur
 
 my $obj = Math::Bfloat16->new('1.414');
 cmp_ok(Math::Bfloat16->new($obj), '==', $obj, "new(obj) == obj");
-cmp_ok(Math::Bfloat16->new($obj), '==', '1.414', "new(obj) == value of obj");
+cmp_ok(Math::Bfloat16->new($obj), '==', sprintf("%.${printf_bits}g", bf16_to_NV($obj)), "new(obj) == value of obj");
 
 my $mpfr_obj = Math::MPFR->new();
 Math::MPFR::Rmpfr_set_inf($mpfr_obj, 1);
