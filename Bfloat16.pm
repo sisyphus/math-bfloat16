@@ -51,7 +51,6 @@ if(_MPFR_VERSION() < 262912 || !_buildopt_bfloat16_p()) {
 
 my @tagged = qw( bf16_to_NV bf16_to_MPFR bf16_to_Float32
                  is_bf16_nan is_bf16_inf is_bf16_zero bf16_set_nan bf16_set_inf bf16_set_zero
-                 bf16_cmp
                  bf16_set rndn_Float32
                  bf16_nextabove bf16_nextbelow
                  unpack_bf16_hex pack_bf16_hex
@@ -79,9 +78,6 @@ my @tagged = qw( bf16_to_NV bf16_to_MPFR bf16_to_Float32
                2  => sub {return bf16_cmp_IV(@_)},
                3  => sub {return bf16_cmp_NV(@_)},
                5  => sub {return bf16_cmp_Float32(@_)},
-               6  => sub {return bf16_cmp_MPFR(@_)},
-               7  => sub {return bf16_cmp_GMPf(@_)},
-               8  => sub {return bf16_cmp_GMPq(@_)},
                );
 
 $Math::Bfloat16::bf16_DENORM_MIN = Math::Bfloat16->new(2) ** (bf16_EMIN - 1);                   # 9.184e-41
@@ -184,44 +180,65 @@ sub oload_abs {
 }
 
 sub oload_equiv {
+  my $itsa = _itsa($_[1]);
+  die "Unrecognized 2nd argument passed to Math::Bfloat16 overloaded '==' operator"
+    if $itsa > 5;
   return 0 if _nan_involved($_[0], $_[1]);
-  return 1 if bf16_cmp(@_) == 0;
+  return 1 if _bf16_cmp($itsa, @_) == 0;
   return 0;
 }
 
 sub oload_not_equiv {
+  my $itsa = _itsa($_[1]);
+  die "Unrecognized 2nd argument passed to Math::Bfloat16 overloaded '!=' operator"
+    if $itsa > 5;
   return 1 if _nan_involved($_[0], $_[1]);
-  return 1 if bf16_cmp(@_) != 0;
+  return 1 if _bf16_cmp($itsa, @_) != 0;
   return 0;
 }
 
 sub oload_gt {
+  my $itsa = _itsa($_[1]);
+  die "Unrecognized 2nd argument passed to Math::Bfloat16 overloaded '>' operator"
+    if $itsa > 5;
   return 0 if _nan_involved($_[0], $_[1]);
-  return 1 if bf16_cmp(@_) > 0;
+  return 1 if _bf16_cmp($itsa, @_) > 0;
   return 0;
 }
 
 sub oload_gte {
+  my $itsa = _itsa($_[1]);
+  die "Unrecognized 2nd argument passed to Math::Bfloat16 overloaded '>=' operator"
+    if $itsa > 5;
   return 0 if _nan_involved($_[0], $_[1]);
-  return 1 if bf16_cmp(@_) >= 0;
+  return 1 if _bf16_cmp($itsa, @_) >= 0;
   return 0;
 }
 
 sub oload_lt {
+  my $itsa = _itsa($_[1]);
+  die "Unrecognized 2nd argument passed to Math::Bfloat16 overloaded '<' operator"
+    if $itsa > 5;
   return 0 if _nan_involved($_[0], $_[1]);
-  return 1 if bf16_cmp(@_) < 0;
+  return 1 if _bf16_cmp($itsa, @_) < 0;
   return 0;
 }
 
 sub oload_lte {
+  my $itsa = _itsa($_[1]);
+  die "Unrecognized 2nd argument passed to Math::Bfloat16 overloaded '<=' operator"
+    if $itsa > 5;
   return 0 if _nan_involved($_[0], $_[1]);
-  return 1 if bf16_cmp(@_) <= 0;
+  return 1 if _bf16_cmp($itsa, @_) <= 0;
   return 0;
 }
 
 sub oload_spaceship {
+  my $itsa = _itsa($_[1]);
+  die "Unrecognized 2nd argument passed to Math::Bfloat16 overloaded '<=>' operator"
+    if $itsa > 5;
   return undef if _nan_involved($_[0], $_[1]);
-  my $ret = bf16_cmp(@_);
+  my $ret = _bf16_cmp($itsa, @_);
   return 1 if $ret > 0;
   return -1 if $ret < 0;
   return 0;
@@ -335,8 +352,10 @@ sub rndn_Float32 {
   Math::Float32::flt_to_NV($_[0]);
 }
 
-sub bf16_cmp {
-  my $itsa = _itsa($_[1]);
+sub _bf16_cmp {
+  my $itsa = shift; # This identifies the type of the 2nd arg
+                    # passed to the overloaded comparison operartor.
+                    # We already know the 1st arg is a Math::Bfloat16 object.
   my ($ret, $coderef);
   if($itsa == 4) {
     my $second_arg = $_[1] + 0;
@@ -353,13 +372,13 @@ sub bf16_cmp {
 }
 
 sub _nan_involved {
-  # Takes 2 arguments - a Math::BigFloat object and a second arg which
-  # can be any of PV, IV, NV, Math::Float32, Math::GMPf, Math::GMPq
-  # or Math::MPFR object. Return 1 if at least one of the args is NaN.
+  # Takes 2 arguments - a Math::Bfloat16 object and a second arg which
+  # can be any of Math::Bfloat16 object, PV, IV, NV, Math::Float32 object.
+  # Return 1 if at least one of the args is NaN.
   return 1 if is_bf16_nan($_[0]);
   my $itsa = _itsa($_[1]);
-  return 1 if ($itsa == 1 && is_bf16_nan($_[1]));
-  if($itsa == 3 || $itsa == 4 || $itsa == 5 || $itsa == 6) { return 1 if $_[1] != $_[1] }
+  if($itsa == 1) { return 1 if is_bf16_nan($_[1]) }
+  else { return 1 if $_[1] != $_[1] }
   return 0;
 }
 
