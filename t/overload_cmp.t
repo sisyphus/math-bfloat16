@@ -1,3 +1,4 @@
+# overloading of Math::Float32 objects is tested in overload_float32.t.
 use strict;
 use warnings;
 use Math::Bfloat16 qw(:all);
